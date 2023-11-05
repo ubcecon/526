@@ -1,0 +1,4 @@
+/site/.quarto/
+/site/env/
+*~
+/site/.jupyter_cache/
