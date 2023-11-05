@@ -1,0 +1,16 @@
+---
+title: "ECON 526: Quantitative Economics with Data Science Applications"
+author: "Paul Schrimpf"
+bibliography: 526.bib
+---
+
+[Course schedule](https://github.com/ubcecon/econ526)
+
+[Slides from Jesse and Phil](https://ubcecon.github.io/ECON526/lectures/index.html)
+
+# Slides
+
+1. [Matching](matching.qmd)
+   - Reading:  [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
+
+2.

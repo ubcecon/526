@@ -1,0 +1,24 @@
+project:
+  type: website
+  render:
+    - "*.qmd"
+  output-dir: /home/paul/526/ECON526/paul
+
+website:
+  title: "ECON 526"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Contents
+      - href: https://github.com/ubcecon/econ526
+        text: Schedule
+      - text: Slides from Jesse and Phil
+        href: https://ubcecon.github.io/ECON526/lectures/index.html
+      - href: feed.qmd
+        text: Feed
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
