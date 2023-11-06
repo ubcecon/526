@@ -18,13 +18,18 @@ $(SRCDIR)/env/touchfile: $(SRCDIR)/requirements.txt
 	cd $(SRCDIR); source env/bin/activate; pip install -Ur requirements.txt
 	touch $(VENVTOUCH)
 
-all: $(HTMLFILES) $(NOTEBOOKS) venv
+all: $(HTMLFILES) $(NOTEBOOKS) venv data
 
-$(OUTDIR)/%.ipynb: $(SRCDIR)/%.qmd $(VENVTOUCH)
+$(OUTDIR)/%.ipynb: $(SRCDIR)/%.qmd $(VENVTOUCH) data
 	source $(SRCDIR)/env/bin/activate; quarto render $< --profile lectures --to ipynb --no-clean
 
-$(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(VENVTOUCH) $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css
+$(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(VENVTOUCH) $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css data
 	source $(SRCDIR)/env/bin/activate; quarto render $<
 
 deploy: all
 	cd $(ECON526); git commit -a -m "updates to slides"; git push origin main
+
+data: site/data/learning_mindset.csv
+
+site/data/learning_mindset.csv:
+	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/learning_mindset.csv"

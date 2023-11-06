@@ -1,6 +1,6 @@
 ---
-title: "ECON526: Quantitative Economics with Data Science Applications"
-subtitle: "Matching"
+title: "Matching"
+subtitle: "ECON526"
 author:
     - name: Paul Schrimpf
       affiliations: University of British Columbia
@@ -113,17 +113,6 @@ w = w/np.mean(w**2);
 ## Why not regression?
 
 ```{python}
-#| code-fold: true
-#| code-summary: "plot"
-plt.scatter(X[:,1],w*T)
-plt.xlabel("X")
-plt.ylabel("ωT")
-plt.show()
-```
-
-## Why not regression?
-
-```{python}
 TX = np.hstack((T.reshape(len(T),1),X))
 abhat = np.linalg.solve(TX.T @ TX, TX.T @ y)
 ahat = abhat[0]
@@ -141,10 +130,11 @@ np.mean(y1-y0)
 ```{python}
 #| code-fold: true
 #| code-summary: "plot"
-fig, axes = plt.subplots(2, 1, figsize=(8, 6))
+import matplotlib.cm as cm
+fig, axes = plt.subplots(2, 1, figsize=(6, 6))
 
 # Create a scatter plot for the first panel (left)
-axes[0].scatter(X[:,1], w*T)
+axes[0].scatter(X[:,1], w, c=T, cmap=cm.Dark2)
 axes[0].set_xlabel("X")
 axes[0].set_ylabel("ωT")
 axes[0].set_title("Weights")
@@ -277,7 +267,7 @@ est.fit(y, T, X=None, W=X)
 ```{python}
 point = est.const_marginal_effect(None)
 lb, ub = est.const_marginal_effect_interval(None, alpha=0.05)
-display(lb,point,ub)
+print(lb,point,ub)
 ```
 
 
@@ -302,7 +292,7 @@ import statsmodels.formula.api as smf
 from causalinference import CausalModel
 style.use("fivethirtyeight")
 pd.set_option("display.max_columns", 20)
-datadir="/home/paul/526/python-causality-handbook/causal-inference-for-the-brave-and-true/data"
+datadir="./data"
 ```
 
 ```{python}
@@ -473,7 +463,7 @@ print(ate-1.96*se, ate, ate+1.96*se)
 from econml.dr import DRLearner, LinearDRLearner, SparseLinearDRLearner
 from econml.sklearn_extensions.linear_model import StatsModelsLinearRegression
 
-est = LinearDRLearner(#featurizer=PolynomialFeatures(degree=20, include_bias=False),
+est = LinearDRLearner(#featurizer=PolynomialFeatures(degree=2, include_bias=False),
                 model_regression=LassoCV(),
                 model_propensity=LogisticRegressionCV(),
                 cv=5)
@@ -486,10 +476,11 @@ print(lb,point,ub)
 
 ## Sources and Further Reading
 
-- Useful additional reading is [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021.
+- Useful additional reading is [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021.^[These slides do not mention the importance of overlap/balance, but hopefully I emphasized it during lecture. Overlap is very important in practice. The reading, especially @hk2021, cover it pretty well. ]
 
 - The representation of the estimate from a linear model as a weighted average is based on @borusyak2018
 
 - The growth mindset example is take from @facure2022
+
 
 ## References
