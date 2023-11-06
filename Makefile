@@ -14,7 +14,7 @@ VENVTOUCH := $(SRCDIR)/env/touchfile
 venv: $(VENVTOUCH)
 
 $(SRCDIR)/env/touchfile: $(SRCDIR)/requirements.txt
-	cd $(SRCDIR); test -d venv || python3 -m venv venv
+	cd $(SRCDIR); test -d venv || python3 -m venv env
 	cd $(SRCDIR); source env/bin/activate; pip install -Ur requirements.txt
 	touch $(VENVTOUCH)
 
