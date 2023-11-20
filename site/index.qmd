@@ -9,4 +9,11 @@ bibliography: 526.bib
 1. [Matching slides](matching.qmd), [notebook](matching.ipynb)
    - Reading:  [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
 
-2. [Difference in differences](did.qmd), [notebook](did.ipynb)
+2. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
+   - Reading: [chapter 13](https://matheusfacure.github.io/python-causality-handbook/13-Difference-in-Differences.html) of @facure2022
+
+3. [Fixed Effects](fe.qmd), [notebook](fe.ipynb)
+   - Reading: [chapter 14](https://matheusfacure.github.io/python-causality-handbook/14-Panel-Data-and-Fixed-Effects.html) of @facure2022
+
+4. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
+   - Reading: [chapter 24](https://matheusfacure.github.io/python-causality-handbook/24-The-Diff-in-Diff-Saga.html) of @facure2022, @roth2023, @dd2022

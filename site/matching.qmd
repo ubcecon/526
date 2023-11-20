@@ -17,6 +17,9 @@ format:
           boardmarker-width: 2
           chalk-width: 2
           chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: "tak.jpg"
+          data-background-size: contain
 execute:
   cache: true
   echo: true
@@ -116,7 +119,7 @@ w = w/np.mean(w**2);
 TX = np.hstack((T.reshape(len(T),1),X))
 abhat = np.linalg.solve(TX.T @ TX, TX.T @ y)
 ahat = abhat[0]
-display(ahat)
+print(ahat)
 ```
 
 ```{python}
@@ -244,7 +247,7 @@ $$
 ```{python}
 se = np.sqrt(np.var(y1-y0)/len(y1))
 ate = np.mean(y1-y0)
-display(ate-1.96*se, ate, ate+1.96*se)
+print(ate-1.96*se, ate, ate+1.96*se)
 ```
 
 ## Example: simulation
@@ -323,6 +326,11 @@ plt.show()
 print(smf.ols("achievement_score ~ intervention", data=data).fit().summary().tables[1])
 ```
 
+```{python}
+print(smf.ols("achievement_score ~ intervention", data=data).fit(
+    cov_type="cluster", cov_kwds={'groups': data['schoolid']}).summary().tables[1])
+```
+
 ## Unadjusted estimate of ATE
 
 ```{python}
@@ -348,7 +356,7 @@ print(ols.summary().tables[1])
 ## Regression estimate of ATE: weights
 
 ```{python}
-lpm = smf.ols("intervention ~ success_expect + ethnicity + gender + frst_in_family + school_urbanicity + school_mindset + school_achievement + school_ethnic_minority + school_poverty + school_size",data=data).fit()
+lpm = smf.ols("intervention ~ success_expect + ethnicity + gender + frst_in_family + school_urbanicity + school_mindset + school_achievement + school_ethnic_minority + school_poverty + school_size",data=data).fit(cov_type="cluster", cov_kwds={'groups': data['schoolid']})
 w = lpm.resid / np.var(lpm.resid)
 print(np.mean(data.achievement_score*w))
 ```
@@ -386,11 +394,11 @@ X = data_with_categ.columns.drop(['schoolid', T, Y])
 ## Propensity Score Matching
 
 ```{python}
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.neighbors import KNeighborsRegressor
 import sklearn
 
-def propensitymatching(T,Y,X,psmodel=LogisticRegression(),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
+def propensitymatching(T,Y,X,psmodel=LogisticRegressionCV(),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ey1 = neighbormodel.fit(ps[T==1].reshape(-1,1),Y[T==1])
@@ -422,7 +430,7 @@ plt.show()
 ## Inverse Propensity Weighting
 
 ```{python}
-def ipw(T,Y,X,psmodel=LogisticRegression()):
+def ipw(T,Y,X,psmodel=LogisticRegressionCV()):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ate=np.mean(Y*(T - ps)/(ps*(1-ps)))
@@ -439,7 +447,7 @@ from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifi
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
 from sklearn.preprocessing import PolynomialFeatures
 
-def robustate(T,Y,X,psmodel=LogisticRegression(),ymodel=LassoCV()):
+def robustate(T,Y,X,psmodel=LogisticRegressionCV(),ymodel=LassoCV(), cluster=None):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ey1fit = ymodel.fit(X[T==1],Y[T==1])
@@ -448,12 +456,20 @@ def robustate(T,Y,X,psmodel=LogisticRegression(),ymodel=LassoCV()):
     ey0 = ey0fit.predict(X)
     ate_terms = ey1 - ey0 + T*(Y- ey1)/ps - (1-T)*(Y-ey0)/(1-ps)
     ate = np.mean(ate_terms)
-    ate_se = np.sqrt(np.var(ate_terms)/len(ate_terms))
+    # check if cluster is None
+    if cluster is None :
+        ate_se = np.sqrt(np.var(ate_terms)/len(ate_terms))
+    else :
+        creg=smf.ols("y ~ 1", pd.DataFrame({"y" : ate_terms})).fit(cov_type="cluster", cov_kwds={'groups': cluster})
+        ate_se = np.sqrt(creg.cov_params().iloc[0,0])
+
     return(ate, ate_se, ps, ey1,ey0)
 
-ate,se,ps,ey1,ey0 = robustate(data_with_categ[T],data_with_categ[Y],data_with_categ[X])
+ate,se,ps,ey1,ey0 = robustate(data_with_categ[T],data_with_categ[Y],data_with_categ[X],cluster=data_with_categ['schoolid'])
 print(ate-1.96*se, ate, ate+1.96*se)
 ```
+
+^[We have glossed over some details needed for doubly robust estimation to have nice statistical properties. Those details matter and are not implemented correctly above. It is better to use the econml instead.]
 
 ## Doubly Robust
 

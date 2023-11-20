@@ -2,3 +2,4 @@
 /site/env/
 *~
 /site/.jupyter_cache/
+/site/auto/

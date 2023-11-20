@@ -29,7 +29,11 @@ $(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(VENVTOUCH) $(SRCDIR)/_quarto.yml $(SRCDIR)/s
 deploy: all
 	cd $(ECON526); git commit -a -m "updates to slides"; git push origin main
 
-data: site/data/learning_mindset.csv
+data: site/data/learning_mindset.csv \
+	site/data/billboard_impact.csv
 
 site/data/learning_mindset.csv:
 	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/learning_mindset.csv"
+
+site/data/billboard_impact.csv:
+	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/billboard_impact.csv"
