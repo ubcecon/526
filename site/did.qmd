@@ -1,5 +1,5 @@
 ---
-title: "Difference in Differences"
+title: "Introduction to Difference in Differences"
 subtitle: "ECON526"
 author:
     - name: Paul Schrimpf

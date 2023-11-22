@@ -1,0 +1,418 @@
+---
+title: "Difference in Differences II"
+subtitle: "ECON526"
+author:
+    - name: Paul Schrimpf
+      affiliations: University of British Columbia
+format:
+    revealjs:
+        width: 1600
+        height: 900
+        min-scale: 0.1
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: "hudson.jpg"
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+
+# Difference in Differences
+
+$$
+\def\Er{{\mathrm{E}}}
+\def\En{{\mathbb{E}_n}}
+\def\cov{{\mathrm{Cov}}}
+\def\var{{\mathrm{Var}}}
+\def\R{{\mathbb{R}}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\def\rank{{\mathrm{rank}}}
+\newcommand{\inpr}{ \overset{p^*_{\scriptscriptstyle n}}{\longrightarrow}}
+\def\inprob{{\,{\buildrel p \over \rightarrow}\,}}
+\def\indist{\,{\buildrel d \over \rightarrow}\,}
+\DeclareMathOperator*{\plim}{plim}
+$$
+
+## Setup
+
+- ~~Two~~ Many periods, binary treatment in ~~second~~ some periods
+- Potential outcomes $\{y_{it}(0),y_{it}(1)\}_{t=1}^T$ for $i=1,...,N$
+- Treatment $D_{it} \in \{0,1\}$,
+    - $D_{i0} = 0$ $\forall i$
+    - $D_{i1} = 1$ for some, $0$ for others
+- Observe $y_{it} = y_{it}(0)(1-D_{it}) + D_{it} y_{it}(1)$
+
+## Identification
+
+- Same logic as before,
+$$
+\begin{align*}
+ATT_{t,t-s} & = \Er[y_{it}(1) - \color{red}{y_{it}(0)} | D_{it} = 1, D_{it-s}=0] \\
+& = \Er[y_{it}(1) - y_{it-s}(0) | D_{it} = 1, D_{it-s}=0] - \\
+& \;\; -  \Er[\color{red}{y_{it}(0)} - y_{t-s}(0) | D_{it}=1, D_{it-s}=0]
+\end{align*}
+$$
+
+  - assume $\Er[\color{red}{y_{it}(0)} - y_{it-s}(0) | D_{it}=1,  D_{it-s}=0] = \Er[y_{it}(0) - y_{it-s}(0) | D_{it}=0, D_{it-s}=0]$
+
+$$
+\begin{align*}
+ATT_{t,t-s}& = \Er[y_{it} - y_{it-s} | D_{it}=1, D_{it-s}=0] - \Er[y_{it} - y_{it-s} | D_{it}=0, D_{it-s}=0]
+\end{align*}
+$$
+- Similarly, can identify various other interpretable average
+treatment effects conditional on being treated at some times and not others
+
+## Estimation
+
+- Plugin
+
+- Fixed effects?
+$$
+y_{it} = \beta D_{it} + \alpha_i + \delta_t + \epsilon_{it}
+$$
+When will $\hat{\beta}^{FE}$ consistently estimate some interpretable conditional average of treatment effects?
+
+## Fixed Effects
+
+- As with [matching](matching.qmd),
+$$
+\begin{align*}
+\hat{\beta} = & \sum_{i=1,t=1}^{n,T} y_{it} \overbrace{\frac{\tilde{D}_{it}}{ \sum_{i,t} \tilde{D}_{it}^2 }}^{\hat{\omega}_{it}(D_it)} \\
+= & \sum_{i=1,t=1}^{n,T} y_{it}(0) \hat{\omega}_{it}(D_it) + \sum_{i=1,t=1}^{n,T} D_{it} (y_{it}(1) - y_{it}(0)) \hat{\omega}_{it}(D_it)
+\end{align*}
+$$
+where
+$$
+\begin{align*}
+\tilde{D}_{it} & = D_{it} - \frac{1}{n} \sum_{j=1}^n (D_{jt} - \frac{1}{T} \sum_{s=1}^T D_{js}) - \frac{1}{T} \sum_{s=1}^T D_{is} \\
+& = D_{it} - \frac{1}{n} \sum_{j=1}^n D_{jt} - \frac{1}{T} \sum_{s=1}^T D_{is} + \frac{1}{nT} \sum_{j,s} D_{js}
+\end{align*}
+$$
+
+```{python}
+#| code-fold: true
+#| code-summary: "imports"
+import warnings
+warnings.filterwarnings('ignore')
+
+import pandas as pd
+import numpy as np
+from matplotlib import style
+from matplotlib import pyplot as plt
+style.use("fivethirtyeight")
+```
+
+## Weights
+
+```{python}
+#| code-fold:true
+def assigntreat(n, T, portiontreated):
+    treated = np.zeros((n, T), dtype=bool)
+    for t in range(1, T):
+        treated[:, t] = treated[:, t - 1]
+        if portiontreated[t] > 0:
+            treated[:, t] = np.logical_or(treated[:, t-1], np.random.rand(n) < portiontreated[t])
+    return treated
+
+def weights(D):
+    D̈ = D - np.mean(D, axis=0) - np.mean(D, axis=1)[:, np.newaxis] + np.mean(D)
+    ω = D̈ / np.sum(D̈**2)
+    return ω
+
+n = 100
+T = 9
+pt = np.zeros(T)
+pt[T//2 + 1] = 0.5
+D = assigntreat(n, T,pt)
+y = np.random.randn(n, T)
+weighted_sum = np.sum(y * weights(D))
+print(weighted_sum)
+```
+
+```{python}
+#| code-fold: true
+
+# check that it matches fixed effect estimate from a package
+from linearmodels.panel import PanelOLS
+
+df = pd.DataFrame({
+    'id': np.repeat(np.arange(1, n + 1), T),
+    't': np.tile(np.arange(1, T + 1), n),
+    'y': y.flatten(),
+    'D': D.flatten()
+})
+df.set_index(['id', 't'], inplace=True)
+model = PanelOLS(df['y'], df[['D']], entity_effects=True, time_effects=True)
+result = model.fit()
+print(result)
+```
+
+## Weights with Single Treatment Time
+
+
+```{python}
+def plotD(D,ax):
+    n, T = D.shape
+    ax.set(xlabel='time',ylabel='portiontreated')
+    ax.plot(range(1,T+1),D.mean(axis=0))
+    ax
+
+def plotweights(D, ax):
+    n, T = D.shape
+    ω = weights(D)
+    groups = np.unique(D, axis=0)
+    ax.set(xlabel='time', ylabel='weight')
+
+    for g in groups:
+        i = np.where(np.all(D == g, axis=1))[0][0]
+        wt = ω[i, :]
+        ax.plot(range(1, T+1), wt, marker='o', label=f'Treated {np.sum(g)} times')
+
+    ax.legend()
+    ax
+
+def plotwd(D):
+    fig, ax = plt.subplots(2,1)
+    ax[0]=plotD(D,ax[0])
+    ax[1]=plotweights(D,ax[1])
+    plt.show()
+
+plotwd(D)
+```
+
+## Weights with Early and Late Treated
+
+```{python}
+pt = np.zeros(T)
+pt[1] = 0.3
+pt[T-2] = 0.6
+D = assigntreat(n,T,pt)
+plotwd(D)
+```
+
+## Sign Reversal
+
+```{python}
+dvals = np.unique(D,axis=0)
+dvals.sort()
+ATT = np.ones(T)
+ATT[0] = 0.0
+ATT[T-2:T] = 6.0
+
+def simulate(n,T,pt,ATT,sigma=0.01):
+    D = assigntreat(n,T,pt)
+    y = np.random.randn(n,T)*sigma + ATT[np.cumsum(D, axis=1)]
+    df = pd.DataFrame({
+        'id': np.repeat(np.arange(1, n + 1), T),
+        't': np.tile(np.arange(1, T + 1), n),
+        'y': y.flatten(),
+        'D': D.flatten()
+    })
+    df.set_index(['id', 't'], inplace=True)
+    return(df)
+
+df = simulate(n,T,pt,ATT)
+model = PanelOLS(df['y'], df[['D']], entity_effects=True, time_effects=True)
+result = model.fit()
+print(result)
+```
+
+## When to worry
+
+- If multiple treatment times and treatment heterogeneity
+- Even if weights do not have wrong sign, the fixed effects estimate is hard to interpret
+- Same logic applies more generally -- not just to time
+  - E.g. if have group effects, some treated units in multiple groups,
+  and $E[y(1) - y(0) | group]$ varies
+
+## What to Do?
+
+- Follow identification
+$$
+\begin{align*}
+ATT_{t,t-s}& = \Er[y_{it} - y_{it-s} | D_{it}=1, D_{it-s}=0] - \Er[y_{it} - y_{it-s} | D_{it}=0, D_{it-s}=0]
+\end{align*}
+$$
+and estimate
+$$
+\begin{align*}
+\widehat{ATT}_{t,t-s} = & \frac{\sum_i y_{it} D_{it}(1-D_{it-s})}{\sum_i D_{it}(1-D_{it-s})} \\
+& - \frac{\sum_i y_{it} (1-D_{it})(1-D_{it-s})}{\sum_i (1-D_{it})(1-D_{it-s})}
+\end{align*}
+$$
+and perhaps some average, e.g. (there are other reasonable weighted averages)
+$$
+\sum_{t=1}^T \frac{\sum_i D_{it}}{\sum_{i,s} D_{i,s}} \frac{1}{t-1} \sum_{s=1}^{t-1} \widehat{ATT}_{t,t-s}
+$$
+  - Code? Inference? Optimal? (could create it, but there's an easier way)
+
+## What to Do?
+
+- Use an appropriate package
+   - [differences](https://github.com/bernardodionisi/differences)
+   - see https://asjadnaqvi.github.io/DiD/ for more options (but none are python, so `¯\_(ツ)_/¯`)
+
+- Problem is possible correlation of $(y_{it}(1) - y_{it}(0))D_{it}$ with $\tilde{D}_{it}$
+   - $\tilde{D}_{it}$ is function of $t$ and $(D_{i1}, ..., D_{iT})$
+   - Estimating separate coefficient for each combination of $t$ and $(D_{i1}, ..., D_{iT})$ will eliminate correlation / flexibly model treatment effect heterogeneity
+
+## What to Do?
+
+- Cohorts = unique sequences of $(D_{i1}, ..., D_{iT})$
+  - In current simulated example, three cohorts
+      1. $(0, 0, 0, 0, 0, 0, 0, 0, 0)$
+      2. $(0, 0, 0, 0, 0, 0, 0, 1, 1)$
+      3. $(0, 1, 1, 1, 1, 1, 1, 1, 1)$
+
+- Estimate:
+$$
+y_{it} = \sum_{c=1}^C D_{it} 1\{C_i=c\} \beta_{ct} + \alpha_i + \delta_t + \epsilon_{it}
+$$
+
+- $\hat{\beta}_{ct}$ consistently estimates $\Er[y_{it}(1) - y_{it}(0) | C_{i}=c, D_{it}=1]$ is parallel trends holds for all periods
+$$
+\Er[y_{it}(0) - y_{it-s}(0) | C_i=c] = \Er[y_{it}(0) - y_{it-s}(0) | C_i=c']
+$$
+for all $t, s, c, c'$
+
+::: {.notes}
+
+Need to check carefully that the claims in this slide are correct.
+
+:::
+
+## Regression with Cohort Interactions
+
+```{python}
+def definecohort(df):
+    # convert dummies into categorical
+    n = len(df.index.levels[0])
+    T = len(df.index.levels[1])
+    dmat=np.array(df.sort_index().D)
+    dmat=np.array(df.D).reshape(n,T)
+    cohort=dmat.dot(1 << np.arange(dmat.shape[-1] - 1, -1, -1))
+    cdf = pd.DataFrame({"id":np.array(df.index.levels[0]), "cohort":pd.Categorical(cohort)})
+    cdf.set_index(['id'],inplace=True)
+    df=pd.merge(df, cdf, left_index=True, right_index=True)
+    return(df)
+
+df = definecohort(df)
+
+def defineinteractions(df):
+    df = df.reset_index()
+    df['dct'] = 'untreated'
+    df['dct'] = df.apply(lambda x: f"t{x['t']},c{x['cohort']}" if x['D'] else f"untreated", axis=1)
+    return(df.set_index(['id','t']))
+
+df = defineinteractions(df)
+
+PanelOLS.from_formula("y ~ -1 + dct + EntityEffects + TimeEffects", df).fit()
+```
+
+## Regression with Cohort Interactions
+
+- If just want to assume parallel trends at treatment times, instead of parallel trends everywhere, can estimate
+$$
+y_{it} = \sum_{c=1}^C 1\{C_i=c\} \delta_{c,t} + \alpha_i + \epsilon_{it}
+$$
+
+- $\hat{\delta}_{c,t} + \frac{\sum \alpha_i 1\{C_i=c\}}{\sum 1\{C_i =
+  c\}}$ consistently estimates $\Er[y_{it} | C_{i} = c]$
+- $\hat{\delta}_{c,t} -\hat{\delta}_{c,t-s}$ consistently estimates
+$\Er[y_{it} - y_{i,t-s}| C_{i} = c]$
+- If $c$ treated at $t$, not at $t-s$, and $c'$ not treated at either and assume parallel trends,
+$$
+\hat{\delta}_{c,t} -\hat{\delta}_{c,t-s} - (\hat{\delta}_{c',t} -\hat{\delta}_{c',t-s}) \inprob \Er[y_{it}(1)-y{it}(0)| C_i =c]
+$$
+
+# Pre-Trends
+
+## Pre-trends
+
+- Parallel trends assumption
+
+$$
+\Er[\color{red}{y_{it}(0)} - y_{it-s}(0) | D_{it}=1,  D_{it-s}=0] = \Er[y_{it}(0) - y_{it-s}(0) | D_{it}=0, D_{it-s}=0]
+$$
+
+- More plausible if there are parallel pre-trends
+
+$$
+\begin{align*}
+& \Er[y_{it-r}(0) - y_{it-s}(0) | D_{it}=1, D_{it-r}=0,  D_{it-s}=0] = \\
+& = \Er[y_{it-r}(0) - y_{it-s}(0) | D_{it}=0, D_{it-r}=0, D_{it-s}=0]
+\end{align*}
+$$
+
+- Always at least plot pre-trends
+
+## Testing for Pre-trends
+
+- Is it a good idea to test
+
+$$
+\begin{align*}
+H_0 : & \Er[y_{it-r} - y_{it-s} | D_{it}=1, D_{it-r}=0,  D_{it-s}=0] = \\
+& = \Er[y_{it-r} - y_{it-s} | D_{it}=0, D_{it-r}=0, D_{it-s}=0]?
+\end{align*}
+$$
+  - Even if not testing formally, we do it informally by plotting
+
+## Testing for Pre-trends
+
+
+- Distribution of $\hat{ATT}$ conditional on fail to reject parallel pre-trends is not normal
+
+- @roth2022 : test can have low power, and in plausible violations, $\widehat{ATT}_{3,2}$ conditional on failing to reject is biased
+
+## Bounds from Pre-trends
+
+- Let $\Delta$ be violation of parallel trends
+$$
+\Delta = \Er[\color{red}{y_{it}(0)} - y_{it-1}(0) | D_{it}=1,  D_{it-1}=0] - \Er[y_{it}(0) - y_{it-1}(0) | D_{it}=0, D_{it-1}=0]
+$$
+
+- Assume $\Delta$ is bounded by deviation from parallel of pre-trends
+$$
+|\Delta| \leq M \max_{r} \left\vert \tau^{1t}_{t-r,t-r-1} - \tau^{0t}_{t-r,t-r-1} \right\vert
+$$
+for some chosen $M$
+
+- See @rambachan2023
+
+# Covariates
+
+## Doubly Robust Difference in Differences
+
+- Linear covariates could lead to same problem as with matching
+
+- Doubly robust estimator @sz2020
+  - [doubleml](https://docs.doubleml.org/stable/examples/py_double_ml_did.html) package implements it
+
+
+## Sources and Further Reading
+
+- @facure2022 [chapter 1]
+- @hk2021 [chapter 16]
+- Recent reviews: @roth2023, @dd2022
+- Early work pointing to problems with fixed effects:
+  - @laporte2005, @wooldridge2005
+- Explosion of papers written just before 2020, published just after:
+  - @borusyak2018
+  - @dd2020
+  - @callaway2021
+  - @goodmanbacon2021
+  - @sun2021
+
+
+## References

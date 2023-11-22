@@ -477,7 +477,6 @@ print(ate-1.96*se, ate, ate+1.96*se)
 
 ```{python}
 from econml.dr import DRLearner, LinearDRLearner, SparseLinearDRLearner
-from econml.sklearn_extensions.linear_model import StatsModelsLinearRegression
 
 est = LinearDRLearner(#featurizer=PolynomialFeatures(degree=2, include_bias=False),
                 model_regression=LassoCV(),

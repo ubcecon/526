@@ -27,7 +27,8 @@ $(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(VENVTOUCH) $(SRCDIR)/_quarto.yml $(SRCDIR)/s
 	source $(SRCDIR)/env/bin/activate; quarto render $<
 
 deploy: all
-	cd $(ECON526); git commit -a -m "updates to slides"; git push origin main
+	cd $(ECON526)/paul; git add *; git commit -a -m "Automated updates to slides."; git push origin main
+	git commit -a -m "Automated updates to slides."; git push origin main
 
 data: site/data/learning_mindset.csv \
 	site/data/billboard_impact.csv

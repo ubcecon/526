@@ -113,3 +113,63 @@ author = {Jonathan Roth and Pedro H.C. Sant’Anna and Alyssa Bilinski and John 
 keywords = {Difference-in-differences, Causal Inference, Staggered Treatment timing, Sensitivity Analysis, Clustering, Parallel trends, Treatment Effect Heterogeneity},
 abstract = {This paper synthesizes recent advances in the econometrics of difference-in-differences (DiD) and provides concrete recommendations for practitioners. We begin by articulating a simple set of “canonical” assumptions under which the econometrics of DiD are well-understood. We then argue that recent advances in DiD methods can be broadly classified as relaxing some components of the canonical DiD setup, with a focus on (i) multiple periods and variation in treatment timing, (ii) potential violations of parallel trends, or (iii) alternative frameworks for inference. Our discussion highlights the different ways that the DiD literature has advanced beyond the canonical model, and helps to clarify when each of the papers will be relevant for empirical work. We conclude by discussing some promising areas for future research.}
 }
+
+
+
+@article{chen2019,
+Author = {Chen, Shuowen and Chernozhukov, Victor and Fernández-Val, Iván},
+Title = {Mastering Panel Metrics: Causal Impact of Democracy on Growth},
+Journal = {AEA Papers and Proceedings},
+Volume = {109},
+Year = {2019},
+Month = {May},
+Pages = {77-82},
+DOI = {10.1257/pandp.20191071},
+URL = {https://www.aeaweb.org/articles?id=10.1257/pandp.20191071}}
+
+
+@article{abadie2023,
+    author = {Abadie, Alberto and Athey, Susan and Imbens, Guido W and Wooldridge, Jeffrey M},
+    title = {When Should You Adjust Standard Errors for Clustering?},
+    journal = {The Quarterly Journal of Economics},
+    volume = {138},
+    number = {1},
+    pages = {1-35},
+    year = {2023},
+    month = {2},
+    abstract = {Clustered standard errors, with clusters defined by factors such as geography, are widespread in empirical research in economics and many other disciplines. Formally, clustered standard errors adjust for the correlations induced by sampling the outcome variable from a data-generating process with unobserved cluster-level components. However, the standard econometric framework for clustering leaves important questions unanswered: (i) Why do we adjust standard errors for clustering in some ways but not others, for example, by state but not by gender, and in observational studies but not in completely randomized experiments? (ii) Is the clustered variance estimator valid if we observe a large fraction of the clusters in the population? (iii) In what settings does the choice of whether and how to cluster make a difference? We address these and other questions using a novel framework for clustered inference on average treatment effects. In addition to the common sampling component, the new framework incorporates a design component that accounts for the variability induced on the estimator by the treatment assignment mechanism. We show that, when the number of clusters in the sample is a nonnegligible fraction of the number of clusters in the population, conventional clustered standard errors can be severely inflated, and propose new variance estimators that correct for this bias.},
+    issn = {0033-5533},
+    doi = {10.1093/qje/qjac038},
+    url = {https://doi.org/10.1093/qje/qjac038},
+    eprint = {https://academic.oup.com/qje/article-pdf/138/1/1/47915437/qjac038.pdf},
+}
+
+
+@article{mackinon2023,
+title = {Cluster-robust inference: A guide to empirical practice},
+journal = {Journal of Econometrics},
+volume = {232},
+number = {2},
+pages = {272-299},
+year = {2023},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2022.04.001},
+url = {https://www.sciencedirect.com/science/article/pii/S0304407622000781},
+author = {James G. MacKinnon and Morten Ørregaard Nielsen and Matthew D. Webb},
+keywords = {Clustered data, Cluster jackknife, Cluster-robust variance estimator (CRVE), Robust inference, Wild cluster bootstrap},
+abstract = {Methods for cluster-robust inference are routinely used in economics and many other disciplines. However, it is only recently that theoretical foundations for the use of these methods in many empirically relevant situations have been developed. In this paper, we use these theoretical results to provide a guide to empirical practice. We do not attempt to present a comprehensive survey of the (very large) literature. Instead, we bridge theory and practice by providing a thorough guide on what to do and why, based on recently available econometric theory and simulation evidence. To practice what we preach, we include an empirical analysis of the effects of the minimum wage on labor supply of teenagers using individual data.}}
+
+@article{sz2020,
+title = {Doubly robust difference-in-differences estimators},
+journal = {Journal of Econometrics},
+volume = {219},
+number = {1},
+pages = {101-122},
+year = {2020},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2020.06.003},
+url = {https://www.sciencedirect.com/science/article/pii/S0304407620301901},
+author = {Pedro H.C. Sant’Anna and Jun Zhao},
+keywords = {Causal inference, Difference-in-differences, Natural experiments, Panel data, Repeated cross-section data, Semiparametric efficiency},
+abstract = {This article proposes doubly robust estimators for the average treatment effect on the treated (ATT) in difference-in-differences (DID) research designs. In contrast to alternative DID estimators, the proposed estimators are consistent if either (but not necessarily both) a propensity score or outcome regression working models are correctly specified. We also derive the semiparametric efficiency bound for the ATT in DID designs when either panel or repeated cross-section data are available, and show that our proposed estimators attain the semiparametric efficiency bound when the working models are correctly specified. Furthermore, we quantify the potential efficiency gains of having access to panel data instead of repeated cross-section data. Finally, by paying particular attention to the estimation method used to estimate the nuisance parameters, we show that one can sometimes construct doubly robust DID estimators for the ATT that are also doubly robust for inference. Simulation studies and an empirical application illustrate the desirable finite-sample performance of the proposed estimators. Open-source software for implementing the proposed policy evaluation tools is available.}
+}
