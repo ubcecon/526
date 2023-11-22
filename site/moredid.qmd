@@ -87,8 +87,7 @@ When will $\hat{\beta}^{FE}$ consistently estimate some interpretable conditiona
 - As with [matching](matching.qmd),
 $$
 \begin{align*}
-\hat{\beta} = & \sum_{i=1,t=1}^{n,T} y_{it} \overbrace{\frac{\tilde{D}_{it}}{ \sum_{i,t} \tilde{D}_{it}^2 }}^{\hat{\omega}_{it}(D_it)} \\
-= & \sum_{i=1,t=1}^{n,T} y_{it}(0) \hat{\omega}_{it}(D_it) + \sum_{i=1,t=1}^{n,T} D_{it} (y_{it}(1) - y_{it}(0)) \hat{\omega}_{it}(D_it)
+\hat{\beta} = & \sum_{i=1,t=1}^{n,T} y_{it} \overbrace{\frac{\tilde{D}_{it}}{ \sum_{i,t} \tilde{D}_{it}^2 }}^{\hat{\omega}_{it}} = \sum_{i=1,t=1}^{n,T} y_{it}(0) \hat{\omega}_{it} + \sum_{i=1,t=1}^{n,T} D_{it} (y_{it}(1) - y_{it}(0)) \hat{\omega}_{it}
 \end{align*}
 $$
 where
@@ -115,7 +114,7 @@ style.use("fivethirtyeight")
 ## Weights
 
 ```{python}
-#| code-fold:true
+#| code-fold: true
 def assigntreat(n, T, portiontreated):
     treated = np.zeros((n, T), dtype=bool)
     for t in range(1, T):
@@ -161,6 +160,7 @@ print(result)
 
 
 ```{python}
+#| code-fold: true
 def plotD(D,ax):
     n, T = D.shape
     ax.set(xlabel='time',ylabel='portiontreated')
@@ -193,6 +193,7 @@ plotwd(D)
 ## Weights with Early and Late Treated
 
 ```{python}
+#| code-fold: true
 pt = np.zeros(T)
 pt[1] = 0.3
 pt[T-2] = 0.6
@@ -203,6 +204,7 @@ plotwd(D)
 ## Sign Reversal
 
 ```{python}
+#| code-fold: true
 dvals = np.unique(D,axis=0)
 dvals.sort()
 ATT = np.ones(T)
@@ -260,7 +262,7 @@ $$
 
 - Use an appropriate package
    - [differences](https://github.com/bernardodionisi/differences)
-   - see https://asjadnaqvi.github.io/DiD/ for more options (but none are python, so `¯\_(ツ)_/¯`)
+   - see https://asjadnaqvi.github.io/DiD/ for more options (but none are python)
 
 - Problem is possible correlation of $(y_{it}(1) - y_{it}(0))D_{it}$ with $\tilde{D}_{it}$
    - $\tilde{D}_{it}$ is function of $t$ and $(D_{i1}, ..., D_{iT})$
@@ -274,6 +276,8 @@ $$
       2. $(0, 0, 0, 0, 0, 0, 0, 1, 1)$
       3. $(0, 1, 1, 1, 1, 1, 1, 1, 1)$
 
+## Regression with Cohort-time Interactions
+
 - Estimate:
 $$
 y_{it} = \sum_{c=1}^C D_{it} 1\{C_i=c\} \beta_{ct} + \alpha_i + \delta_t + \epsilon_{it}
@@ -285,15 +289,10 @@ $$
 $$
 for all $t, s, c, c'$
 
-::: {.notes}
-
-Need to check carefully that the claims in this slide are correct.
-
-:::
-
-## Regression with Cohort Interactions
+## Regression with Cohort-Treat-Time Interactions
 
 ```{python}
+#| code-fold: true
 def definecohort(df):
     # convert dummies into categorical
     n = len(df.index.levels[0])
@@ -319,7 +318,7 @@ df = defineinteractions(df)
 PanelOLS.from_formula("y ~ -1 + dct + EntityEffects + TimeEffects", df).fit()
 ```
 
-## Regression with Cohort Interactions
+## Regression with Cohort-Time Interactions
 
 - If just want to assume parallel trends at treatment times, instead of parallel trends everywhere, can estimate
 $$
@@ -334,6 +333,14 @@ $\Er[y_{it} - y_{i,t-s}| C_{i} = c]$
 $$
 \hat{\delta}_{c,t} -\hat{\delta}_{c,t-s} - (\hat{\delta}_{c',t} -\hat{\delta}_{c',t-s}) \inprob \Er[y_{it}(1)-y{it}(0)| C_i =c]
 $$
+
+## Regression with Cohort-Time Interactions
+```{python}
+dfi=df.reset_index()
+dfi['time'] = dfi['t']
+dfi=dfi.set_index(['id','t'])
+PanelOLS.from_formula("y ~ -1 + C(cohort)*C(time) + EntityEffects",dfi, drop_absorbed=True).fit()
+```
 
 # Pre-Trends
 

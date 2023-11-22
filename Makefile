@@ -18,12 +18,17 @@ $(SRCDIR)/env/touchfile: $(SRCDIR)/requirements.txt
 	cd $(SRCDIR); source env/bin/activate; pip install -Ur requirements.txt
 	touch $(VENVTOUCH)
 
-all: $(HTMLFILES) $(NOTEBOOKS) venv data
 
-$(OUTDIR)/%.ipynb: $(SRCDIR)/%.qmd $(VENVTOUCH) data
+html: $(HTMLFILES) venv data
+
+notebooks: $(NOTEBOOKS) venv data
+
+all: html notebooks
+
+$(OUTDIR)/%.ipynb: $(SRCDIR)/%.qmd
 	source $(SRCDIR)/env/bin/activate; quarto render $< --profile lectures --to ipynb --no-clean
 
-$(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(VENVTOUCH) $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css data
+$(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css
 	source $(SRCDIR)/env/bin/activate; quarto render $<
 
 deploy: all

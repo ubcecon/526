@@ -173,3 +173,163 @@ author = {Pedro H.C. Sant’Anna and Jun Zhao},
 keywords = {Causal inference, Difference-in-differences, Natural experiments, Panel data, Repeated cross-section data, Semiparametric efficiency},
 abstract = {This article proposes doubly robust estimators for the average treatment effect on the treated (ATT) in difference-in-differences (DID) research designs. In contrast to alternative DID estimators, the proposed estimators are consistent if either (but not necessarily both) a propensity score or outcome regression working models are correctly specified. We also derive the semiparametric efficiency bound for the ATT in DID designs when either panel or repeated cross-section data are available, and show that our proposed estimators attain the semiparametric efficiency bound when the working models are correctly specified. Furthermore, we quantify the potential efficiency gains of having access to panel data instead of repeated cross-section data. Finally, by paying particular attention to the estimation method used to estimate the nuisance parameters, we show that one can sometimes construct doubly robust DID estimators for the ATT that are also doubly robust for inference. Simulation studies and an empirical application illustrate the desirable finite-sample performance of the proposed estimators. Open-source software for implementing the proposed policy evaluation tools is available.}
 }
+
+@misc{borusyak2018,
+  title={Revisiting event study designs},
+  author={Borusyak, Kirill and Jaravel, Xavier},
+  year={2018},
+  url={https://scholar.harvard.edu/files/borusyak/files/borusyak_jaravel_event_studies.pdf}
+}
+
+@article{goodmanbacon2021,
+title = {Difference-in-differences with variation in treatment timing},
+journal = {Journal of Econometrics},
+volume = {225},
+number = {2},
+pages = {254-277},
+year = {2021},
+note = {Themed Issue: Treatment Effect 1},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2021.03.014},
+url = {https://www.sciencedirect.com/science/article/pii/S0304407621001445},
+author = {Andrew Goodman-Bacon},
+keywords = {Difference-in-differences, Variation in treatment timing, Two-way fixed effects, Treatment effect heterogeneity},
+abstract = {The canonical difference-in-differences (DD) estimator contains two time periods, ”pre” and ”post”, and two groups, ”treatment” and ”control”. Most DD applications, however, exploit variation across groups of units that receive treatment at different times. This paper shows that the two-way fixed effects estimator equals a weighted average of all possible two-group/two-period DD estimators in the data. A causal interpretation of two-way fixed effects DD estimates requires both a parallel trends assumption and treatment effects that are constant over time. I show how to decompose the difference between two specifications, and provide a new analysis of models that include time-varying controls.}
+}
+
+@article{sun2021,
+title = {Estimating dynamic treatment effects in event studies with heterogeneous treatment effects},
+journal = {Journal of Econometrics},
+volume = {225},
+number = {2},
+pages = {175-199},
+year = {2021},
+note = {Themed Issue: Treatment Effect 1},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2020.09.006},
+url = {https://www.sciencedirect.com/science/article/pii/S030440762030378X},
+author = {Liyang Sun and Sarah Abraham},
+keywords = {Difference-in-differences, Two-way fixed effects, Pretrend test},
+abstract = {To estimate the dynamic effects of an absorbing treatment, researchers often use two-way fixed effects regressions that include leads and lags of the treatment. We show that in settings with variation in treatment timing across units, the coefficient on a given lead or lag can be contaminated by effects from other periods, and apparent pretrends can arise solely from treatment effects heterogeneity. We propose an alternative estimator that is free of contamination, and illustrate the relative shortcomings of two-way fixed effects regressions with leads and lags through an empirical application.}
+}
+
+@article{callaway2021,
+title = {Difference-in-Differences with multiple time periods},
+journal = {Journal of Econometrics},
+volume = {225},
+number = {2},
+pages = {200-230},
+year = {2021},
+note = {Themed Issue: Treatment Effect 1},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2020.12.001},
+url = {https://www.sciencedirect.com/science/article/pii/S0304407620303948},
+author = {Brantly Callaway and Pedro H.C. Sant’Anna},
+keywords = {Difference-in-Differences, Dynamic treatment effects, Doubly robust, Event study, Variation in treatment timing, Treatment effect heterogeneity, Semi-parametric},
+abstract = {In this article, we consider identification, estimation, and inference procedures for treatment effect parameters using Difference-in-Differences (DiD) with (i) multiple time periods, (ii) variation in treatment timing, and (iii) when the “parallel trends assumption” holds potentially only after conditioning on observed covariates. We show that a family of causal effect parameters are identified in staggered DiD setups, even if differences in observed characteristics create non-parallel outcome dynamics between groups. Our identification results allow one to use outcome regression, inverse probability weighting, or doubly-robust estimands. We also propose different aggregation schemes that can be used to highlight treatment effect heterogeneity across different dimensions as well as to summarize the overall effect of participating in the treatment. We establish the asymptotic properties of the proposed estimators and prove the validity of a computationally convenient bootstrap procedure to conduct asymptotically valid simultaneous (instead of pointwise) inference. Finally, we illustrate the relevance of our proposed tools by analyzing the effect of the minimum wage on teen employment from 2001–2007. Open-source software is available for implementing the proposed methods.}
+}
+
+@article{laporte2005,
+title = {Estimation of panel data models with binary indicators when treatment effects are not constant over time},
+journal = {Economics Letters},
+volume = {88},
+number = {3},
+pages = {389-396},
+year = {2005},
+issn = {0165-1765},
+doi = {https://doi.org/10.1016/j.econlet.2005.04.002},
+url = {https://www.sciencedirect.com/science/article/pii/S016517650500145X},
+author = {Audrey Laporte and Frank Windmeijer},
+keywords = {Panel data, Treatment effects},
+abstract = {We show that two commonly employed estimation procedures to deal with correlated unobserved heterogeneity in panel data models, within-groups and first-differenced OLS, can lead to very different estimates of treatment effects when these are not constant over time and treatment is a state that only changes occasionally. It is therefore important to allow for flexible time varying treatment effects when estimating panel data models with binary indicator variables as is illustrated by an example of the effects of marital status on mental wellbeing.}
+}
+
+@article{dd2020,
+Author = {de Chaisemartin, Clément and D'Haultfœuille, Xavier},
+Title = {Two-Way Fixed Effects Estimators with Heterogeneous Treatment Effects},
+Journal = {American Economic Review},
+Volume = {110},
+Number = {9},
+Year = {2020},
+Month = {September},
+Pages = {2964-96},
+DOI = {10.1257/aer.20181169},
+URL = {https://www.aeaweb.org/articles?id=10.1257/aer.20181169}}
+
+
+@article{wooldridge2005,
+    author = {Wooldridge, Jeffrey M.},
+    title = "{Fixed-Effects and Related Estimators for Correlated Random-Coefficient and Treatment-Effect Panel Data Models}",
+    journal = {The Review of Economics and Statistics},
+    volume = {87},
+    number = {2},
+    pages = {385-390},
+    year = {2005},
+    month = {05},
+    abstract = "{I derive conditions under which a class of fixed-effects estimators consistently estimates the population-averaged slope coefficients in panel data models with individual-specific slopes, where the slopes are allowed to be correlated with the covariates. In addition to including the usual fixed-effects estimator, the results apply to estimators that eliminate individual-specific trends. I apply the results, and propose alternative estimators, to estimation of average treatment in a class of nonlinear unobserved-effects models.}",
+    issn = {0034-6535},
+    doi = {10.1162/0034653053970320},
+    url = {https://doi.org/10.1162/0034653053970320},
+    eprint = {https://direct.mit.edu/rest/article-pdf/87/2/385/1614013/0034653053970320.pdf},
+}
+
+@article{dd2022,
+    author = {de Chaisemartin, Clément and D’Haultfœuille, Xavier},
+    title = "{Two-way fixed effects and differences-in-differences with heterogeneous treatment effects: a survey}",
+    journal = {The Econometrics Journal},
+    volume = {26},
+    number = {3},
+    pages = {C1-C30},
+    year = {2022},
+    month = {06},
+    abstract = "{Linear regressions with period and group fixed effects are widely used to estimate policie’s effects: 26 of the 100 most cited papers published by the American Economic Review from 2015 to 2019 estimate such regressions. It has recently been shown that those regressions may produce misleading estimates if the policy’s effect is heterogeneous between groups or over time, as is often the case. This survey reviews a fast-growing literature that documents this issue and that proposes alternative estimators robust to heterogeneous effects. We use those alternative estimators to revisit Wolfers (2006a).}",
+    issn = {1368-4221},
+    doi = {10.1093/ectj/utac017},
+    url = {https://doi.org/10.1093/ectj/utac017},
+    eprint = {https://academic.oup.com/ectj/article-pdf/26/3/C1/51707976/utac017.pdf},
+}
+
+@article{roth2023,
+title = {What’s trending in difference-in-differences? A synthesis of the recent econometrics literature},
+journal = {Journal of Econometrics},
+volume = {235},
+number = {2},
+pages = {2218-2244},
+year = {2023},
+issn = {0304-4076},
+doi = {https://doi.org/10.1016/j.jeconom.2023.03.008},
+url = {https://www.sciencedirect.com/science/article/pii/S0304407623001318},
+author = {Jonathan Roth and Pedro H.C. Sant’Anna and Alyssa Bilinski and John Poe},
+keywords = {Difference-in-differences, Causal Inference, Staggered Treatment timing, Sensitivity Analysis, Clustering, Parallel trends, Treatment Effect Heterogeneity},
+abstract = {This paper synthesizes recent advances in the econometrics of difference-in-differences (DiD) and provides concrete recommendations for practitioners. We begin by articulating a simple set of “canonical” assumptions under which the econometrics of DiD are well-understood. We then argue that recent advances in DiD methods can be broadly classified as relaxing some components of the canonical DiD setup, with a focus on (i) multiple periods and variation in treatment timing, (ii) potential violations of parallel trends, or (iii) alternative frameworks for inference. Our discussion highlights the different ways that the DiD literature has advanced beyond the canonical model, and helps to clarify when each of the papers will be relevant for empirical work. We conclude by discussing some promising areas for future research.}
+}
+
+
+
+@article{roth2022,
+Author = {Roth, Jonathan},
+Title = {Pretest with Caution: Event-Study Estimates after Testing for Parallel Trends},
+Journal = {American Economic Review: Insights},
+Volume = {4},
+Number = {3},
+Year = {2022},
+Month = {September},
+Pages = {305-22},
+DOI = {10.1257/aeri.20210236},
+URL = {https://www.aeaweb.org/articles?id=10.1257/aeri.20210236}}
+
+@article{rambachan2023,
+    author = {Rambachan, Ashesh and Roth, Jonathan},
+    title = "{A More Credible Approach to Parallel Trends}",
+    journal = {The Review of Economic Studies},
+    volume = {90},
+    number = {5},
+    pages = {2555-2591},
+    year = {2023},
+    month = {02},
+    abstract = "{This paper proposes tools for robust inference in difference-in-differences and event-study designs where the parallel trends assumption may be violated. Instead of requiring that parallel trends holds exactly, we impose restrictions on how different the post-treatment violations of parallel trends can be from the pre-treatment differences in trends (“pre-trends”). The causal parameter of interest is partially identified under these restrictions. We introduce two approaches that guarantee uniformly valid inference under the imposed restrictions, and we derive novel results showing that they have desirable power properties in our context. We illustrate how economic knowledge can inform the restrictions on the possible violations of parallel trends in two economic applications. We also highlight how our approach can be used to conduct sensitivity analyses showing what causal conclusions can be drawn under various restrictions on the possible violations of the parallel trends assumption.}",
+    issn = {0034-6527},
+    doi = {10.1093/restud/rdad018},
+    url = {https://doi.org/10.1093/restud/rdad018},
+    eprint = {https://academic.oup.com/restud/article-pdf/90/5/2555/51356029/rdad018.pdf},
+}
