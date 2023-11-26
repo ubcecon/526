@@ -36,10 +36,14 @@ deploy: all
 	git commit -a -m "Automated updates to slides."; git push origin main
 
 data: site/data/learning_mindset.csv \
-	site/data/billboard_impact.csv
+	site/data/billboard_impact.csv \
+	site/data/cigar.csv
 
 site/data/learning_mindset.csv:
 	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/learning_mindset.csv"
 
 site/data/billboard_impact.csv:
 	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/billboard_impact.csv"
+
+site/data/smoking.csv:
+	wget -O $@ "https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/master/causal-inference-for-the-brave-and-true/data/smoking.csv"
