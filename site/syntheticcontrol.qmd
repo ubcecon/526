@@ -128,11 +128,11 @@ $$
 
 - Vector of pretreatment variables for treated unit
 $$
-\mathbm{X}_1 = \left(Y_{11}, \cdots Y_{1T_0}, z_{11}, \cdots, z_1K \right)^T
+\mathbf{X}_1 = \left(Y_{11}, \cdots Y_{1T_0}, z_{11}, \cdots, z_1K \right)^T
 $$
 - Matrix of same variabels for untreated
 $$
-\mathbm{X}_0 = \begin{pmatrix}
+\mathbf{X}_0 = \begin{pmatrix}
 Y_{21} & \cdots & Y_{2T_0} & z_{21} & \cdots & z_{2K} \\
 \vdots &        &          &        &        & \vdots \\
 Y_{J+1,1} & \cdots & Y_{J+1,T_0} & z_{J+1,1} & \cdots & z_{J+1,K}
@@ -141,7 +141,7 @@ $$
 - Weights minimize difference
 $$
 \begin{align*}
-\hat{W} = & \textrm{arg}\min_{W \in \R^J} \Vert \mathbm{X}_1 - \mathbm{X}_0 W \Vert_V \\
+\hat{W} = & \textrm{arg}\min_{W \in \R^J} \Vert \mathbf{X}_1 - \mathbf{X}_0 W \Vert_V \\
 & s.t. \sum_{j=2}^{J+1} w_j = 1 \\
 & \;\;\; 0 \leq w_j \leq 1 \;\; \forall j
 \end{align*}
@@ -219,17 +219,17 @@ $$
    - Observed $Z_j$
    - Unobserved$\lambda_t$, $\mu_j$
 - As $T_0$ increases or variance of $\epsilon_{jt}$ decreases, bias of $\hat{\tau}_{it}$ decreases
-  - Needs $\mathbm{X}_1 \approx \mathbm{X}_0 W$
+  - Needs $\mathbf{X}_1 \approx \mathbf{X}_0 W$
 
 ## Choices
 
 ::: {.incremental}
-- Variables in $\mathbm{X}$ to match
-   - Fewer make eaiser to have $\mathbm{X}_1 \approx \mathbm{X}_0 W$
+- Variables in $\mathbf{X}$ to match
+   - Fewer make eaiser to have $\mathbf{X}_1 \approx \mathbf{X}_0 W$
    - But fewer make $W$ depend more on $\epsilon$
 
 - Set of untreated units to consider
-   - More units makes eaiser to have $\mathbm{X}_1 \approx \mathbm{X}_0 W$
+   - More units makes eaiser to have $\mathbf{X}_1 \approx \mathbf{X}_0 W$
    - But risk of overfitting
 
 :::
@@ -244,7 +244,7 @@ $$
 \underbrace{\sum_{j=2}^{J+1} \hat{w}_j Y_{jt}}_{\hat{Y}_{1t}(0)}
 $$
   - single observation of $Y_{1t}$
-  - $\hat{w}_j$ depends on pre-treatment variables $\mathbm{X}_1, \mathbm{X}_0$, $J+1 \times (T_0 + K)$
+  - $\hat{w}_j$ depends on pre-treatment variables $\mathbf{X}_1, \mathbf{X}_0$, $J+1 \times (T_0 + K)$
   - $J$ values of $Y_{jt}$
 - Usual asymptotics not applicable
 
@@ -386,7 +386,7 @@ np.mean(np.array(effects) < calif_effect)
 $$
 \begin{align*}
 \hat{\tau}_{1t} = & Y_{1t} -
-\underbrace{\hat{Y}_{1t}(0)}_{\text{prediction given $Y_{jt}, \mathbm{X}_0$}}
+\underbrace{\hat{Y}_{1t}(0)}_{\text{prediction given $Y_{jt}, \mathbf{X}_0$}}
 \\
 = &  \underbrace{Y_{1t}(1) - \color{grey}{Y_{1t}(0)}}_{\tau_{1t}} + \underbrace{\color{grey}{Y_{1t}(0)} - \hat{Y}_{1t}(0)}_{\text{prediction error}}
 \end{align*}
@@ -411,7 +411,7 @@ $$
 
 - Given coverage level $\alpha$, gives interval $\mathcal{I}_{1-\alpha}$ such that
 $$
-P\left[ P\left(\tau_{1t} \in \mathcal{I}_{1-\alpha} | \mathbm{X}_0, \{y_{jt}\}_{j=1}^J\right) > 1-\alpha-\epsilon(T_0) \right] > 1 - \pi(T_0)
+P\left[ P\left(\tau_{1t} \in \mathcal{I}_{1-\alpha} | \mathbf{X}_0, \{y_{jt}\}_{j=1}^J\right) > 1-\alpha-\epsilon(T_0) \right] > 1 - \pi(T_0)
 $$
 where $\epsilon(T_0) \to 0$ and $pi(T_0) \to 0$ as $T_0 \to \infty$
 
@@ -475,7 +475,7 @@ e_lags = 0
 e_alpha = 0.05
 u_alpha = 0.05
 sims = 200
-cores = 20
+cores = 1
 
 random.seed(8894)
 result = scpi(scdf, sims=sims, w_constr=w_constr, u_order=u_order, u_lags=u_lags,
