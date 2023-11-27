@@ -18,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: ""
+          data-background-image: "athelstan-lillooet.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -69,7 +69,8 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
 
-%matplotlib inline
+#if 'ipykernel' in sys.modules:
+#    %matplotlib inline
 
 pd.set_option("display.max_columns", 20)
 style.use("fivethirtyeight")
@@ -124,7 +125,7 @@ $$
 $$
 - $\hat{w}_j$ chosen to make synthetic control close to treated unit in before treatment
 
-## Weights
+## Variables to Match
 
 - Vector of pretreatment variables for treated unit
 $$
@@ -138,6 +139,9 @@ Y_{21} & \cdots & Y_{2T_0} & z_{21} & \cdots & z_{2K} \\
 Y_{J+1,1} & \cdots & Y_{J+1,T_0} & z_{J+1,1} & \cdots & z_{J+1,K}
 \end{pmatrix}^T
 $$
+
+## Weights
+
 - Weights minimize difference
 $$
 \begin{align*}
@@ -153,6 +157,7 @@ $$
 
 :::
 
+
 ## Computing Weights
 
 ```{python}
@@ -163,17 +168,18 @@ inverted = (cigar.query("~after_treatment") # filter pre-intervention period
 inverted.head()
 ```
 
+## Computing Weights
+
 ```{python}
+from scipy.optimize import fmin_slsqp
+from toolz import reduce, partial
+
 X1 = inverted[3].values # state of california
 X0 = inverted.drop(columns=3).values  # other states
 
 def loss_w(W, X0, X1) -> float:
     return np.sqrt(np.mean((X1 - X0.dot(W))**2))
-```
 
-```{python}
-from scipy.optimize import fmin_slsqp
-from toolz import reduce, partial
 
 def get_w(X0, X1):
     w_start = [1/X0.shape[1]]*X0.shape[1]
@@ -244,7 +250,7 @@ $$
 \underbrace{\sum_{j=2}^{J+1} \hat{w}_j Y_{jt}}_{\hat{Y}_{1t}(0)}
 $$
   - single observation of $Y_{1t}$
-  - $\hat{w}_j$ depends on pre-treatment variables $\mathbf{X}_1, \mathbf{X}_0$, $J+1 \times (T_0 + K)$
+  - $\hat{w}_j$ depends on pre-treatment variables $\underbrace{\mathbf{X}_1, \mathbf{X}_0}_{(J+1) \times (T_0 + K)}$
   - $J$ values of $Y_{jt}$
 - Usual asymptotics not applicable
 
@@ -257,7 +263,6 @@ $$
 ## Treatment Permutation
 
 ```{python}
-#| code-fold: true
 def synthetic_control(state: int, data: pd.DataFrame) -> np.array:
     features = ["cigsale", "retprice"]
     inverted = (data.query("~after_treatment")
@@ -273,16 +278,15 @@ def synthetic_control(state: int, data: pd.DataFrame) -> np.array:
     return (data
             .query(f"state=={state}")[["state", "year", "cigsale", "after_treatment"]]
             .assign(synthetic=synthetic))
-```
 
-```{python}
-#| code-fold: true
 from joblib import Parallel, delayed
 
 control_pool = cigar["state"].unique()
 parallel_fn = delayed(partial(synthetic_control, data=cigar))
-synthetic_states = Parallel(n_jobs=20)(parallel_fn(state) for state in control_pool)
+synthetic_states = Parallel(n_jobs=20)(parallel_fn(state) for state in control_pool);
 ```
+
+## Treatment Permutation
 
 ```{python}
 #| code-fold: true
@@ -377,7 +381,7 @@ np.mean(np.array(effects) < calif_effect)
 
 - Cons:
   - Assumption about randomized treatment assignment is generally false
-  - Hard to test hypotheses other than $H_0: \tau=0$ & hard to construct confidence intervals
+  - Needs modification to test hypotheses other than $H_0: \tau=0$ & to construct confidence intervals
 
 
 ## Prediction Intervals
@@ -413,7 +417,7 @@ $$
 $$
 P\left[ P\left(\tau_{1t} \in \mathcal{I}_{1-\alpha} | \mathbf{X}_0, \{y_{jt}\}_{j=1}^J\right) > 1-\alpha-\epsilon(T_0) \right] > 1 - \pi(T_0)
 $$
-where $\epsilon(T_0) \to 0$ and $pi(T_0) \to 0$ as $T_0 \to \infty$
+where $\epsilon(T_0) \to 0$ and $\pi(T_0) \to 0$ as $T_0 \to \infty$
 
 - prediction error comes from
   1. estimation of $\hat{w}$, options refer to `u_` in `scpi_pkg`

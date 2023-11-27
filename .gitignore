@@ -3,3 +3,5 @@
 *~
 /site/.jupyter_cache/
 /site/auto/
+*ipynb
+#*#
