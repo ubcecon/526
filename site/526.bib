@@ -485,3 +485,148 @@ eprint = {
 }
 
 }
+
+@article{chernozhukov2018,
+author = {Chernozhukov, Victor and Chetverikov, Denis and Demirer, Mert and Duflo, Esther and Hansen, Christian and Newey, Whitney and Robins, James},
+title = {Double/debiased machine learning for treatment and structural parameters},
+journal = {The Econometrics Journal},
+volume = {21},
+number = {1},
+year = {2018},
+pages = {C1-C68},
+doi = {10.1111/ectj.12097},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/ectj.12097},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/ectj.12097},
+abstract = {Summary We revisit the classic semi-parametric problem of inference on a low-dimensional parameter θ0 in the presence of high-dimensional nuisance parameters η0. We depart from the classical setting by allowing for η0 to be so high-dimensional that the traditional assumptions (e.g. Donsker properties) that limit complexity of the parameter space for this object break down. To estimate η0, we consider the use of statistical or machine learning (ML) methods, which are particularly well suited to estimation in modern, very high-dimensional cases. ML methods perform well by employing regularization to reduce variance and trading off regularization bias with overfitting in practice. However, both regularization bias and overfitting in estimating η0 cause a heavy bias in estimators of θ0 that are obtained by naively plugging ML estimators of η0 into estimating equations for θ0. This bias results in the naive estimator failing to be consistent, where N is the sample size. We show that the impact of regularization bias and overfitting on estimation of the parameter of interest θ0 can be removed by using two simple, yet critical, ingredients: (1) using Neyman-orthogonal moments/scores that have reduced sensitivity with respect to nuisance parameters to estimate θ0; (2) making use of cross-fitting, which provides an efficient form of data-splitting. We call the resulting set of methods double or debiased ML (DML). We verify that DML delivers point estimators that concentrate in an -neighbourhood of the true parameter values and are approximately unbiased and normally distributed, which allows construction of valid confidence statements. The generic statistical theory of DML is elementary and simultaneously relies on only weak theoretical requirements, which will admit the use of a broad array of modern ML methods for estimating the nuisance parameters, such as random forests, lasso, ridge, deep neural nets, boosted trees, and various hybrids and ensembles of these methods. We illustrate the general theory by applying it to provide theoretical properties of the following: DML applied to learn the main regression parameter in a partially linear regression model; DML applied to learn the coefficient on an endogenous variable in a partially linear instrumental variables model; DML applied to learn the average treatment effect and the average treatment effect on the treated under unconfoundedness; DML applied to learn the local average treatment effect in an instrumental variables setting. In addition to these theoretical applications, we also illustrate the use of DML in three empirical examples.}
+}
+
+
+
+@article{chernozhukov2017,
+Author = {Chernozhukov, Victor and Chetverikov, Denis and Demirer, Mert and Duflo, Esther and Hansen, Christian and Newey, Whitney},
+Title = {Double/Debiased/Neyman Machine Learning of Treatment Effects},
+Journal = {American Economic Review},
+Volume = {107},
+Number = {5},
+Year = {2017},
+Month = {May},
+Pages = {261-65},
+DOI = {10.1257/aer.p20171038},
+URL = {http://www.aeaweb.org/articles?id=10.1257/aer.p20171038}}
+
+@article{donohue2001,
+author = {Donohue, III ,John J. and Levitt, Steven D.},
+title = {The Impact of Legalized Abortion on Crime*},
+journal = {The Quarterly Journal of Economics},
+volume = {116},
+number = {2},
+pages = {379-420},
+year = {2001},
+doi = {10.1162/00335530151144050},
+URL = {http://dx.doi.org/10.1162/00335530151144050},
+eprint = {/oup/backfile/content_public/journal/qje/116/2/10.1162/00335530151144050/2/116-2-379.pdf}
+}
+
+@InProceedings{hartford2017,
+  title = 	 {Deep {IV}: A Flexible Approach for Counterfactual Prediction},
+  author = 	 {Jason Hartford and Greg Lewis and Kevin Leyton-Brown and Matt Taddy},
+  booktitle = 	 {Proceedings of the 34th International Conference on Machine Learning},
+  pages = 	 {1414--1423},
+  year = 	 {2017},
+  editor = 	 {Doina Precup and Yee Whye Teh},
+  volume = 	 {70},
+  series = 	 {Proceedings of Machine Learning Research},
+  address = 	 {International Convention Centre, Sydney, Australia},
+  month = 	 {06--11 Aug},
+  publisher = 	 {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v70/hartford17a/hartford17a.pdf},
+  url = 	 {http://proceedings.mlr.press/v70/hartford17a.html},
+  abstract = 	 {Counterfactual prediction requires understanding causal relationships between so-called treatment and outcome variables. This paper provides a recipe for augmenting deep learning methods to accurately characterize such relationships in the presence of instrument variables (IVs) – sources of treatment randomization that are conditionally independent from the outcomes. Our IV specification resolves into two prediction tasks that can be solved with deep neural nets: a first-stage network for treatment prediction and a second-stage network whose loss function involves integration over the conditional treatment distribution. This Deep IV framework allows us to take advantage of off-the-shelf supervised learning techniques to estimate causal effects by adapting the loss function. Experiments show that it outperforms existing machine learning approaches.}
+}
+
+@article{knaus2022,
+    author = {Knaus, Michael C},
+    title = "{Double machine learning-based programme evaluation under unconfoundedness}",
+    journal = {The Econometrics Journal},
+    volume = {25},
+    number = {3},
+    pages = {602-627},
+    year = {2022},
+    month = {06},
+    abstract = "{This paper reviews, applies, and extends recently proposed methods based on double machine learning (DML) with a focus on programme evaluation under unconfoundedness. DML-based methods leverage flexible prediction models to adjust for confounding variables in the estimation of (a) standard average effects, (b) different forms of heterogeneous effects, and (c) optimal treatment assignment rules. An evaluation of multiple programmes of the Swiss Active Labour Market Policy illustrates how DML-based methods enable a comprehensive programme evaluation. Motivated by extreme individualised treatment effect estimates of the DR-learner, we propose the normalised DR-learner (NDR-learner) to address this issue. The NDR-learner acknowledges that individualised effect estimates can be stabilised by an individualised normalisation of inverse probability weights.}",
+    issn = {1368-4221},
+    doi = {10.1093/ectj/utac015},
+    url = {https://doi.org/10.1093/ectj/utac015},
+    eprint = {https://academic.oup.com/ectj/article-pdf/25/3/602/45842098/utac015\_online\_appendix.pdf},
+}
+
+
+@misc{cns2021,
+Author = {Victor Chernozhukov and Whitney K. Newey and Rahul Singh},
+Title = {A Simple and General Debiased Machine Learning Theorem with Finite Sample Guarantees},
+Year = {2021},
+Eprint = {arXiv:2105.15197},
+}
+
+@article{hines2022,
+author = {Oliver Hines, Oliver Dukes, Karla Diaz-Ordaz and Stijn Vansteelandt},
+title = {Demystifying Statistical Learning Based on Efficient Influence Functions},
+journal = {The American Statistician},
+volume = {76},
+number = {3},
+pages = {292-304},
+year = {2022},
+publisher = {Taylor & Francis},
+doi = {10.1080/00031305.2021.2021984},
+
+
+URL = {
+
+        https://doi.org/10.1080/00031305.2021.2021984
+
+
+
+},
+eprint = {
+
+        https://doi.org/10.1080/00031305.2021.2021984
+
+
+
+}
+
+}
+
+@article{belloni2014,
+author = {Belloni, Alexandre and Chernozhukov, Victor and Hansen, Christian},
+title = {Inference on Treatment Effects after Selection among High-Dimensional Controls†},
+journal = {The Review of Economic Studies},
+volume = {81},
+number = {2},
+pages = {608-650},
+year = {2014},
+doi = {10.1093/restud/rdt044},
+URL = {http://dx.doi.org/10.1093/restud/rdt044},
+}
+
+@article{chernozhukov2015,
+author = {Chernozhukov, Victor and Hansen, Christian and Spindler, Martin},
+title = {Valid Post-Selection and Post-Regularization Inference: An Elementary, General Approach},
+journal = {Annual Review of Economics},
+volume = {7},
+number = {1},
+pages = {649-688},
+year = {2015},
+doi = {10.1146/annurev-economics-012315-015826},
+
+URL = {
+        https://doi.org/10.1146/annurev-economics-012315-015826
+
+},
+eprint = {
+        https://doi.org/10.1146/annurev-economics-012315-015826
+
+}
+,
+    abstract = { We present an expository, general analysis of valid post-selection or post-regularization inference about a low-dimensional target parameter in the presence of a very high-dimensional nuisance parameter that is estimated using selection or regularization methods. Our analysis provides a set of high-level conditions under which inference for the low-dimensional parameter based on testing or point estimation methods will be regular despite selection or regularization biases occurring in the estimation of the high-dimensional nuisance parameter. A key element is the use of so-called immunized or orthogonal estimating equations that are locally insensitive to small mistakes in the estimation of the high-dimensional nuisance parameter. As an illustration, we analyze affine-quadratic models and specialize these results to a linear instrumental variables model with many regressors and many instruments. We conclude with a review of other developments in post-selection inference and note that many can be viewed as special cases of the general encompassing framework of orthogonal estimating equations provided in this article. }
+}
