@@ -18,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: ""
+          data-background-image: "green.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -61,7 +61,7 @@ $$
   - Some of the technical details behind this idea
   - How this idea can be applied to other estimators
 
-::: {.note}
+::: {.notes}
 
 These notes will examine the incorportion of machine learning
 methods in classic econometric techniques for estimating causal
@@ -99,7 +99,7 @@ $$
 - Covariates $x_i$
 - Assume unconfoundedness : $d_i \indep y_i(1), y_i(0) | x_i$
 
-::: {.note}
+::: {.notes}
 
 The partially linear and matching models are
 closely related. If the conditional mean independence assumption
@@ -178,7 +178,7 @@ $$
 \En[\psi(w_i;\hat{\theta},\hat{\eta}) ] = 0
 $$
 
-::: {.note}
+::: {.notes}
 
 We are following the setup and notation of
 @chernozhukov2018. As in the examples, the dimension of $\theta$
@@ -203,7 +203,7 @@ $$
 
     where $m(x) = \Er[d|x]$ and $\mu(y) = \Er[y|x]$
 
-::: {.note}
+::: {.notes}
 **Example: partially linear model**
 In the partially linear model,
 
@@ -414,25 +414,15 @@ $$
 0 = \Er\left[ (y - f_0(x))\partial_x \log p(x) + (\theta - f_0'(x)) \right]
 $$
 
-## Orthogonal scores via projection
+## Orthogonal scores via Two Other Methods
 
-- Original model: $m: \mathcal{W} \times \R^{d_\theta} \times \R^{d_h} \to \R^{d_m}$
-$$
-\Er[m(W;\theta_0,h_0(Z))|R] = 0
-$$
-- Let $A(R)$ be $d_\theta \times d_m$ moment selection matrix, $\Omega(R)$ $d_m \times d_m$ weighting matrix, and
-$$
-\begin{align*}
-\Gamma(R) = & \partial_{v'} \Er[m(W;\theta_0,v)|R]|_{v=h_0(Z)} \\
-G(Z) = & \Er[A(R)'\Omega(R)^{-1} \Gamma(R)|Z]
-\Er[\Gamma(R)'\Omega(R)^{-1} \Gamma(R) |Z]^{-1} \\
-\mu_0(R) = & A(R)'\Omega(R)^{-1} - G(Z) \Gamma(R)'\Omega(R)^{-1}
-\end{align*}
-$$
-- $\eta = (\mu, h)$ and
-$$ \psi(W;\theta, \eta) = \mu(R) m(W;\theta, h(Z)) $$
+- "Orthogonal" suggests ideas from linear algebra will useful, and they are
 
-::: {.note}
+- Projection: take orthogonal to $\eta_0$ projection of moments
+
+- Riesz representer
+
+::: {.notes}
 
 @chernozhukov2018 show how to construct orthogonal scores in a few
 examples via concentrating out and projection.  @chernozhukov2015 also
@@ -508,6 +498,7 @@ def partial_linear(y, d, X, yestimator, destimator, folds=3):
 ## Unconditional Gap
 
 ```{python}
+#| code-fold: true
 cps["female"] = (cps.sex==2)
 cps["log_earn"] = np.log(cps.earnwke)
 cps.loc[np.isinf(cps.log_earn), "log_earn"] = np.nan
@@ -537,7 +528,7 @@ from patsy import dmatrices
 fmla  = "log_earn + female ~ log_uhours + log_hourslw + I(age**2) + age + C(grade92) + C(race) + C(smsastat) + C(unionmme) + C(unioncov) + C(ind02) + C(occ2012)"
 yd, X = dmatrices(fmla,cps)
 female = yd[:,1]
-logearn = yd[:,2]
+logearn = yd[:,2];
 ```
 
 ## Estimating $\eta$
@@ -545,7 +536,7 @@ logearn = yd[:,2]
 ```{python}
 alphas = np.exp(np.linspace(-2, -12, 20))
 lassoy = linear_model.LassoCV(cv=4, alphas=alphas, max_iter=5000).fit(X,logearn)
-lassod = linear_model.LassoCV(cv=4, alphas=alphas, max_iter=5000).fit(X,female)
+lassod = linear_model.LassoCV(cv=4, alphas=alphas, max_iter=5000).fit(X,female);
 ```
 
 ## Estimating $\eta$
@@ -578,14 +569,12 @@ fig.show()
 ## Estimating $\eta$
 
 ```{python}
-# there are theoretical reasons to choose a smaller regularization
-# than the one that minimizes cv. BUT THIS WAY OF CHOOSING IS ARBITRARY AND MIGHT BE WRONG
 def pickalpha(lassocv) :
-    imin = np.argmin(lassocv.mse_path_.mean(axis=1))
-    msemin = lassocv.mse_path_.mean(axis=1)[imin]
-    se = lassocv.mse_path_.std(axis=1)[imin]
-    alpha= min([alpha for (alpha, mse) in zip(lassocv.alphas_, lassocv.mse_path_.mean(axis=1)) if mse<msemin+se])
-    #alpha = lassocv.alphas_[imin+2]
+    #imin = np.argmin(lassocv.mse_path_.mean(axis=1))
+    #msemin = lassocv.mse_path_.mean(axis=1)[imin]
+    #se = lassocv.mse_path_.std(axis=1)[imin]
+    #alpha= min([alpha for (alpha, mse) in zip(lassocv.alphas_, lassocv.mse_path_.mean(axis=1)) if mse<msemin+se])
+    alpha = lassocv.alpha_
     return(alpha)
 
 alphay = pickalpha(lassoy)
@@ -598,10 +587,38 @@ alphad = pickalpha(lassod)
 pl_lasso = partial_linear(logearn, female, X,
                           linear_model.Lasso(alpha=alphay),
                           linear_model.Lasso(alpha=alphad))
-pl_lasso[0].summary()
+pl_lasso[0].summary(slim=True)
 ```
 
+## Examining Predictions
 
+```{python}
+#| code-fold: true
+import seaborn as sns
+# Visualize predictions
+def preddf(pl):
+    df = pd.DataFrame({"logearn":logearn,
+                       "predicted":pl[1],
+                       "female":female,
+                       "P(female|x)":pl[2]})
+    return(df)
+
+def plotpredictions(df) :
+    fig, ax = plt.subplots(2,1)
+    plt.figure()
+    sns.scatterplot(x = df.predicted, y = df.logearn-df.predicted, hue=df.female, ax=ax[0])
+    ax[0].set_title("Prediction Errors for Log Earnings")
+
+    sns.histplot(df["P(female|x)"][df.female==0], kde = False,
+                 label = "Male", ax=ax[1])
+    sns.histplot(df["P(female|x)"][df.female==1], kde = False,
+                 label = "Female", ax=ax[1])
+    ax[1].set_title('P(female|x)')
+    return(fig)
+
+fig=plotpredictions(preddf(pl_lasso))
+fig.show()
+```
 
 ## Software
 
@@ -612,6 +629,7 @@ pl_lasso[0].summary()
 ## Using `doubleml`
 
 ```{python}
+#| code-fold: true
 import doubleml
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LassoCV, LogisticRegressionCV
@@ -635,9 +653,24 @@ dml_plr_lasso.fit(store_predictions=True)
 print(dml_plr_lasso.summary)
 ```
 
+## Visualizing Predictions: Lasso & Logistic Lasso
+
+```{python}
+#| code-fold: true
+def dmlpreddf(dml_model):
+    df=pd.DataFrame({"logearn":logearn,
+                     "predicted":dml_model.predictions['ml_l'].flatten(),
+                     "female":female,
+                     "P(female|x)":dml_model.predictions['ml_m'].flatten()})
+    return(df)
+
+plotpredictions(dmlpreddf(dml_plr_lasso)).show()
+```
+
 ## With Gradient Boosted Trees
 
 ```{python}
+#| code-fold: true
 from lightgbm import LGBMClassifier, LGBMRegressor
 ylearner = LGBMRegressor(force_col_wise=True)
 dlearner = LGBMClassifier(force_col_wise=True)
@@ -645,6 +678,14 @@ dml_plr_gbt = doubleml.DoubleMLPLR(dml_data, ylearner, dlearner)
 dml_plr_gbt.fit(store_predictions=True)
 print(dml_plr_gbt.summary)
 ```
+
+## Visualizing Predictions: Trees
+
+```{python}
+#| code-fold: true
+plotpredictions(dmlpreddf(dml_plr_gbt)).show()
+```
+
 
 ## Interactive Regression Model
 
@@ -654,6 +695,7 @@ $$
 \begin{align*}
 Y & = g_0(D,X) + U \\
 D & = m_0(X) + V
+\end{align*}
 $$
 - Mechanics same as matching heterogeneous effects
 - Orthogonal moment condition is same as doubly robust matching
@@ -661,12 +703,13 @@ $$
 ## Interactive Regression Model - Lasso
 
 ```{python}
+#| code-fold: true
 np.random.seed(123)
 dml_irm_lasso = doubleml.DoubleMLIRM(dml_data,
-                                ml_g = lasso,
-                                ml_m = lasso_class,
-                                trimming_threshold = 0.01,
-                                n_folds = 3)
+                                     ml_g = lasso,
+                                     ml_m = lasso_class,
+                                     trimming_threshold = 0.01,
+                                     n_folds = 3)
 dml_irm_lasso.fit()
 dml_irm_lasso.summary
 ```
@@ -674,6 +717,7 @@ dml_irm_lasso.summary
 ## Interactive Regression Model - Trees
 
 ```{python}
+#| code-fold: true
 np.random.seed(123)
 dml_irm_gbt = doubleml.DoubleMLIRM(dml_data,
                                      ml_g = ylearner,
