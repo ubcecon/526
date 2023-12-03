@@ -22,6 +22,7 @@ bibliography: 526.bib
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
 
 6. [Double/Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
-   - Reading: [QuantEcon ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
+   - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
 
-
+7. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
+   - Reading: [QuantEcon: Heterogeneity](https://datascience.quantecon.org/applications/heterogeneity.html)
