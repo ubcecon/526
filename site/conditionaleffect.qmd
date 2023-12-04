@@ -1,3 +1,4 @@
+---
 title: "Treatment Heterogeneity and Conditional Effects"
 subtitle: "ECON526"
 author:
@@ -17,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: "green.jpg"
+          data-background-image: "coq.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -49,7 +50,7 @@ $$
 
 - Previously, mostly focused on average effects, e.g.
 $$
-ATE = \Er[Y_i(1) _ Y_i(0)]
+ATE = \Er[Y_i(1) - Y_i(0)]
 $$
 - Also care about conditional average effects, e.g.
 $$
@@ -59,7 +60,7 @@ $$
   - Suggest mechanism for how treatment affects outcome
   - Give treatment assignment rule, e.g.
   $$
-  D_i = \1\{CATE(X_i) > 0 \}
+  D_i = 1\{CATE(X_i) > 0 \}
   $$
 
 :::
@@ -98,7 +99,6 @@ import statsmodels.api as sm
 #from sklearn.utils._testing import ignore_warnings
 #from sklearn.exceptions import ConvergenceWarning
 
-%matplotlib inline
 import matplotlib.pyplot as plt
 import seaborn as sns
 ```
@@ -133,7 +133,7 @@ bw ~ pkh_kec_ever +
   tv + fridge + motorbike + car + goat + cow + horse
 """
 bw, X = patsy.dmatrices(formula, df, return_type="dataframe")
-# some categories are empty after dropping rows will Null, drop now
+# some categories are empty after dropping rows with Null, drop now
 X = X.loc[:, X.sum() > 0]
 bw = bw.iloc[:, 0]
 treatment_variable = "pkh_kec_ever"
@@ -142,8 +142,8 @@ Xl = X.drop(["Intercept", "pkh_kec_ever", "C(dist)[T.313175]"], axis=1)
 loc_id = df.loc[X.index, "Location_ID"].astype("category")
 
 import re
-# remove [ ] from names for compatibility with xgboost
-Xl = Xl.rename(columns=lambda x: re.sub('\[|\]','_',x))
+# remove [ ] from names for compatibility with lightgbm
+Xl = Xl.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
 ```
 
 ```{python}
@@ -306,16 +306,6 @@ def generic_ml_summary(generic_ml_output):
 ```
 
 ## Code
-
-```{python}
-def evaluate_models(models, y, **other_kw):
-    all_kw = kw.copy()
-    all_kw["y"] = y
-    all_kw.update(other_kw)
-    return list(map(lambda x: generic_ml_model(model=x, **all_kw), models))
-```
-
-## Code
 ```{python}
 def generate_report(results):
     summaries = list(map(generic_ml_summary, results))
@@ -324,49 +314,72 @@ def generate_report(results):
         for mod in results
     })
 
-    print("Correlation in median CATE:")
-    display(df_plot.corr())
-    sns.pairplot(df_plot, diag_kind="kde", kind="reg")
+    corrfig=sns.pairplot(df_plot, diag_kind="kde", kind="reg")
 
-    print("\n\nBest linear projection of CATE")
     df_cate = pd.concat({
         s["name"]: pd.DataFrame(dict(blp=s["blp"], se=s["blp_se"]))
         for s in summaries
     }).T.stack()
-    display(df_cate)
 
-    print("\n\nGroup average treatment effects:")
     df_groups = pd.concat({
         s["name"]: pd.DataFrame(dict(gate=s["gate"], se=s["gate_se"]))
         for s in summaries
     }).T.stack()
-    display(df_groups)
+    return({"corr":df_plot.corr(), "pairplot":corrfig, "BLP":df_cate,"GATE":df_groups})
 ```
 
 ## Code
 
 ```{python}
-import xgboost as xgb
+import lightgbm as lgb
+import io
+from contextlib import redirect_stdout, redirect_stderr
 models = [
-    linear_model.LassoCV(cv=10, n_alphas=25, max_iter=500, tol=1e-4, n_jobs=1),
-    ensemble.RandomForestRegressor(n_estimators=200, min_samples_leaf=20),
-    xgb.XGBRegressor(n_estimators=200, max_depth=3, reg_lambda=2.0, reg_alpha=0.0, objective="reg:squarederror"),
+    linear_model.LassoCV(cv=10, n_alphas=25, max_iter=500, tol=1e-4, n_jobs=20),
+    ensemble.RandomForestRegressor(n_estimators=200, min_samples_leaf=20, n_jobs=20),
+    lgb.LGBMRegressor(n_estimators=200, max_depth=4, reg_lambda=1.0, reg_alpha=0.0, n_jobs=20),
     neural_network.MLPRegressor(hidden_layer_sizes=(20, 10), max_iter=500, activation="logistic",
                                 solver="adam", tol=1e-3, early_stopping=True, alpha=0.0001)
 ]
+
 kw = dict(x=Xl, treatment=treatment, n_split=11, n_group=5, cluster_id=loc_id)
+def evaluate_models(models, y, **other_kw):
+    all_kw = kw.copy()
+    all_kw["y"] = y
+    all_kw.update(other_kw)
+    # hide many warnings while fitting
+    with io.StringIO() as obuf, redirect_stdout(obuf):
+        with io.StringIO() as ebuf, redirect_stderr(ebuf):
+           results=list(map(lambda x: generic_ml_model(model=x, **all_kw), models))
+           sout = obuf.getvalue()
+           serr = ebuf.getvalue()
+    return([results,sout,serr])
 ```
 
 ## Results: Birthweight
 
 ```{python}
-results = evaluate_models(models, y=bw)
+results = evaluate_models(models, y=bw);
+report=generate_report(results[0])
+report["pairplot"].fig.show()
 ```
 
 ## Results: Birthweight
 
 ```{python}
-generate_report(results)
+report["corr"]
+```
+
+## Results: Birthweight
+
+```{python}
+report["BLP"]
+```
+
+## Results: Birthweight
+
+```{python}
+report["GATE"]
 ```
 
 ## Results: Assisted Delivery
@@ -374,12 +387,26 @@ generate_report(results)
 ```{python}
 ad = df.loc[X.index, "good_assisted_delivery"]
 results_ad = evaluate_models(models, y=ad)
+report_ad=generate_report(results_ad[0])
+report_ad["pairplot"].fig.show()
 ```
 
 ## Results: Assisted Delivery
 
 ```{python}
-generate_report(results_ad)
+report_ad["corr"]
+```
+
+## Results: Assisted Delivery
+
+```{python}
+report_ad["BLP"]
+```
+
+## Results: Assisted Delivery
+
+```{python}
+report_ad["GATE"]
 ```
 
 ## Covariate Means by Group
@@ -413,7 +440,7 @@ def cov_mean_by_group(y, res, cluster_id):
 
     return out
 
-def compute_group_means_for_results(results):
+def compute_group_means_for_results(results, variables, df2):
     to_cat = []
     for res in results:
         for v in variables:
@@ -426,6 +453,14 @@ def compute_group_means_for_results(results):
     group_means["plus2sd"] = group_means.eval("mean + 1.96*se")
     group_means["minus2sd"] = group_means.eval("mean - 1.96*se")
     return group_means
+
+def groupmeanfig(group_means):
+    g = sns.FacetGrid(group_means, col="variable", col_wrap=min(3,group_means.variable.nunique()), hue="method", sharey=False)
+    g.map(plt.plot, "group", "mean")
+    g.map(plt.plot, "group", "plus2sd", ls="--")
+    g.map(plt.plot, "group", "minus2sd", ls="--")
+    g.add_legend();
+    return(g)
 ```
 
 ## Covariate Means by Group
@@ -436,29 +471,37 @@ df2["edu99"] = df2.edu == 99
 df2["educ"] = df2["edu"]
 df2.loc[df2["edu99"], "educ"] = np.nan
 
-variables = [
-    "log_xp_percap","agecat","educ","tv","goat",
-    "cow","motorbike","hh_cook_wood","pkh_ever"
-]
-
-group_means_ad = compute_group_means_for_results(results_ad)
+variables1 = ["log_xp_percap","agecat","educ"]
+variables2 =["tv","goat","cow",
+             "motorbike", "hh_cook_wood","hh_toilet_own"]
+group_means_ad = compute_group_means_for_results(results_ad[0], variables1, df2)
 ```
 
 ## Covariate Means by Group
 
 ```{python}
-g = sns.FacetGrid(group_means_ad, col="variable", col_wrap=3, hue="method", sharey=False)
-g.map(plt.plot, "group", "mean")
-g.map(plt.plot, "group", "plus2sd", ls="--")
-g.map(plt.plot, "group", "minus2sd", ls="--")
-g.add_legend();
+g = groupmeanfig(group_means_ad)
+g.fig.show()
+```
+
+## Covariate Means by Group
+
+```{python}
+g = groupmeanfig(compute_group_means_for_results(results_ad[0], variables2, df2))
+g.fig.show()
+```
+
+## Treatment Participation by Group
+
+```{python}
+g = groupmeanfig(compute_group_means_for_results(results_ad[0], ["pkh_ever"], df2))
+g.fig.show()
 ```
 
 
+<!-- # Conditional Treatment Effects -->
 
-# Conditional Treatment Effects
-
-# Causal Forests
+<!-- # Causal Forests -->
 
 ## Sources and Further Reading
 
