@@ -411,7 +411,7 @@ for some chosen $M$
 
 - @facure2022 [chapter 1]
 - @hk2021 [chapter 16]
-- Recent reviews: @roth2023, @dd2022
+- Recent reviews: @roth2023, @dd2022, @arkhangelsky2023
 - Early work pointing to problems with fixed effects:
   - @laporte2005, @wooldridge2005
 - Explosion of papers written just before 2020, published just after:
