@@ -2,7 +2,7 @@ project:
   type: website
   render:
     - "*.qmd"
-  output-dir: /home/paul/526/ECON526/paul
+  output-dir: /home/paul/526/ECON526/lectures/paul
 
 website:
   title: "ECON 526"

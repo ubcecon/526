@@ -525,7 +525,7 @@ summary_col(lm, stars=True)
 
 ```{python}
 from patsy import dmatrices
-fmla  = "log_earn + female ~ log_uhours + log_hourslw + I(age**2) + age + C(grade92) + C(race) + C(smsastat) + C(unionmme) + C(unioncov) + C(ind02) + C(occ2012)"
+fmla  = "log_earn + female ~ log_uhours + log_hourslw + I(age**2) + age + C(grade92) + C(race) + C(smsastat) + C(unionmme) + C(unioncov)" #C(ind02) + C(occ2012)"
 yd, X = dmatrices(fmla,cps)
 female = yd[:,1]
 logearn = yd[:,2];
