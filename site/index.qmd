@@ -6,26 +6,29 @@ bibliography: 526.bib
 
 # Slides
 
-1. [Matching slides](matching.qmd), [notebook](matching.ipynb)
+1. [Introduction to Causlity](causuality_intro.qmd), [notebook](cauality_intro.ipynb)
+   - Reading: [Chapter 2](https://causalml-book.org/assets/chapters/CausalML_chap_2.pdf) of @causalml2024 or [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
+
+3. [Matching slides](matching.qmd), [notebook](matching.ipynb)
    - Reading:  [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
 
-2. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
+4. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
    - Reading: [chapter 13](https://matheusfacure.github.io/python-causality-handbook/13-Difference-in-Differences.html) of @facure2022
 
-3. [Fixed Effects](fe.qmd), [notebook](fe.ipynb)
+5. [Fixed Effects](fe.qmd), [notebook](fe.ipynb)
    - Reading: [chapter 14](https://matheusfacure.github.io/python-causality-handbook/14-Panel-Data-and-Fixed-Effects.html) of @facure2022
 
-4. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
+6. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
    - Reading: [chapter 24](https://matheusfacure.github.io/python-causality-handbook/24-The-Diff-in-Diff-Saga.html) of @facure2022, @roth2023, @dd2022
 
-5. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
+7. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
 
-6. [Double/Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
+8. [Double/Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
    - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
 
-7. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
+9. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
    - Reading: [QuantEcon: Heterogeneity](https://datascience.quantecon.org/applications/heterogeneity.html)
 
-8. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
+10. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
    - Reading: [QuantEcon Datascience: Regression - Neural Networks](https://datascience.quantecon.org/tools/regression.html#neural-networks)

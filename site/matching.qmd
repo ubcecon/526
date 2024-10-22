@@ -29,11 +29,11 @@ bibliography: 526.bib
 
 ## Setting
 
-- Potential outcomes $(Y_0, Y_1)$
-- Treatment $T$
-- Observe $Y = Y_0(1-T) + T Y_1$
+- Potential outcomes $(Y(0), Y(1))$
+- Treatment $T \in \{0,1\}$
+- Observe $Y = Y(T)$
 - Covariates $X$
-- Assume conditional independence $(Y_0,Y_1) \perp T | X$
+- Assume conditional independence $(Y(0),Y(1)) \perp T | X$
 
 $$
 \def\Er{{\mathrm{E}}}
@@ -126,7 +126,7 @@ print(ahat)
 np.mean(y1-y0)
 ```
 
-- Weights, $\omega(T,X)$, are not all positive, so the regression estimate can be negative even if $\Er[Y_1 | X] - \Er[Y_0|X]$ is positive everywhere
+- Weights, $\omega(T,X)$, are not all positive, so the regression estimate can be negative even if $\Er[Y(1) | X] - \Er[Y(0)|X]$ is positive everywhere
 
 ## Why not regression?
 
@@ -242,7 +242,7 @@ $$
 
 ## Example: simulation
 
-- Infeasible estimator: average of $Y_1 - Y_0$
+- Infeasible estimator: average of $Y(1) - Y(0)$
 
 ```{python}
 se = np.sqrt(np.var(y1-y0)/len(y1))
