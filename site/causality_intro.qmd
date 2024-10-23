@@ -1,0 +1,260 @@
+---
+title: "Introduction to Causality and Potential Outcomes"
+subtitle: "ECON526"
+author:
+  - name: Paul Schrimpf
+    email: paul.schrimpf@ubc.ca
+    affiliations: University of British Columbia
+format:
+    revealjs:
+        min-scale: 0.1
+        smaller: true
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: "twinoneglacier.jpg"
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+
+# Overview
+
+$$
+\def\indep{\perp\!\!\!\perp} % \def\idp{\perp\kern-5pt\perp}
+\def\Er{\mathrm{E}}
+\def\R{\mathbb{R}}
+\def\En{{\mathbb{E}_n}}
+\def\Pr{\mathrm{P}}
+\newcommand{\norm}[1]{\left\Vert {#1} \right\Vert}
+\newcommand{\abs}[1]{\left\vert {#1} \right\vert}
+\def\inprob{{\,{\buildrel p \over \rightarrow}\,}}
+\def\indist{\,{\buildrel d \over \rightarrow}\,}
+\DeclareMathOperator*{\plim}{plim}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+$$
+
+## Summary
+
+- Potential outcomes, treatment effects
+- Randomized experiments
+
+# Potential Outcomes Framework
+
+## Treatment
+
+::: {.incremental}
+
+- $T_i \in \{0,1\}$
+- Observed outcome $Y_i$
+- We want the causal effect of $T$ on $Y$, but what does that mean?
+  - Potential outcomes give a rigorous definition
+:::
+
+## Potential Outcomes
+
+
+- Potential outcomes $Y_i(0), Y_i(1)$ if $T_i = 0$ or $1$
+- Observe $Y_i = Y_i(T_i)$
+
+::: {.incremental}
+
+- Assume: **No Interference**: $(Y_i(0), Y_i(1))$ is unaffected by $T_j$ for $j \neq i$
+  - aka Stable Unit-Treatment Value Assumption (SUTVA)
+- Treatment effect on $i$ = $Y_i(1) - Y_i(0)$
+
+:::
+
+## Fundamental Problem of Causal Inference
+
+::: {.incremental}
+
+- Only observe $Y_i(1)$ or $Y_i(0)$, never both
+- Individual effects, $Y_i(1) - Y_i(0)$, generally impossible to recover
+- Summaries of individual effects, e.g. $\Er[Y_i(1) - Y_i(0)]$, possible to estimate, but require assumptions
+
+:::
+
+## Average Treatment Effect
+
+::: {.incremental}
+
+- Want the average treatment effect
+$$
+ATE = \Er[Y_i(1) - Y_i(0)]
+$$
+- Can't estimate $\Er[Y_i(d)]$, because $Y_i(d)$ not always observed
+
+:::
+
+## Average Population Effect
+
+- Can estimate $\Er[Y_i(d)|T_i=d]$
+- Average population effect
+  $$
+  APE = \Er[Y_i(1)|T_i=1] - \Er[Y_i(0)|T_i=0]
+  $$
+- How does it compare to the ATE?
+
+
+## Selection Bias {.smaller}
+
+- Comparing ATE and APE
+$$ %
+\begin{align*}
+ATE = & \Er[Y_i(1) - Y_i(0)] \\
+= & \overbrace{\Er[Y_i(1) - Y_i(0) | T_i=1]}^{\text{avg treatment effect  on treated}} P(T_i=1) + \overbrace{\Er[Y_i(1) - Y_i(0) | T_i=0]}^{\text{avg treatment effect on untreated}} P(T_i=0) \\
+= & \left(APE + \overbrace{\Er[Y_i(0)|T_i=0] - \Er[Y_i(0)|T_i=1]}^{\text{selection bias}}\right)
+    P(T_i=1) + \\
+& +  \left(APE + \underbrace{\Er[Y_i(1)|T_i=0] - \Er[Y_i(1)|T_i=1]}_{\text{selection bias}}\right)
+  P(T_i=0)
+\end{align*}
+$$
+
+
+## Selection Bias
+
+- Or,
+$$ %
+APE = ATE + \underbrace{\begin{pmatrix} (\Er[Y_i(0) | T_i=1] - \Er[Y_i(0)|T_i=0])P(T_i=1) + \\
+    + (\Er[Y_i(1) | T_i=1] - \Er[Y_i(1)|T_i=0])P(T_i=0)
+\end{pmatrix}}_{\text{selection bias}}
+$$
+- Selection bias is nonzero if the treated and untreated groups would be different even if everyone had been treated or untreated
+- Selection bias usually nonzero if people select their own treatment
+
+
+## Selection Bias Example
+
+- People have some (possibly noisy) information about $Y_i(0), Y_i(1)$ and choose $T_i$ they prefer
+  - e.g. $T_i = \arg\max_{d\in \{0,1\}} \Er[U(Y_i(d)) | \mathcal{I}_i]$
+
+- Simulation
+  - $i$ observes signal $S_i(0) = Y_i(0) + \epsilon_i(0)$ and $S_i(1) = Y_i(1) + \epsilon_i(1)$
+  - $\epsilon_i(d) \sim N(0,\sigma^2)$, independent
+  - Chooses $\max_d \Er[Y_i(d)|S_i(0), S_i(1)] = \max_d S_i(d)$
+
+```{python}
+#| code-fold: true
+#| output : asis
+import numpy as np
+np.random.seed(0)
+class selectiondata:
+    def __init__(self, n=1000, noisesd=1.0, ate=0.5):
+        self.Y0 = np.random.normal(size=n)
+        self.Y1 = np.random.normal(size=n) + ate
+        self.S0 = self.Y0 + np.random.normal(size=n)*noisesd
+        self.S1 = self.Y1 + np.random.normal(size=n)*noisesd
+        self.T = (self.S1 > self.S0).astype(int)
+        self.Y = self.Y0 * (1 - self.T) + self.Y1 * self.T
+
+    def APE(self):
+        return np.mean(self.Y[self.T==1]) - np.mean(self.Y[self.T==0])
+
+    def ATE(self):
+        return np.mean(self.Y1) - np.mean(self.Y0)
+
+    def selectionbias(self):
+        return (self.APE() - self.ATE())
+
+    def selectionbias0(self):
+        return np.mean( self.Y0[self.T==1]) - np.mean( self.Y0[self.T==0] )
+
+    def selectionbias1(self):
+        return np.mean( self.Y1[self.T==1]) - np.mean(self.Y1[self.T==0] )
+
+
+s = 0.5
+eate = 0.5
+data = selectiondata(n=10_000,noisesd=s, ate=eate)
+
+print("|APE|ATE|Selection Bias|\n" +
+      "|---|---|---|\n" +
+      f"|{data.APE():.2}|{data.ATE():.2}|{data.selectionbias():.2}|\n"
+      f"|σ={s:.2}|\n\n")
+```
+
+# Random Experiments
+
+## Random Experiment
+
+- Assign treatment randomly
+$$
+T_i \indep (Y_i(0),Y_i(1))
+$$
+- Implies
+$$
+\Er[Y_i(1) | T_i=1] = \Er[Y_i(1)] \text{ and } \Er[Y_i(0) | T_i=0] = \Er[Y_i(0)]
+$$
+- So
+$$
+\begin{align*}
+APE = & \Er[Y_i(1)|T_i=1] - \Er[Y_i(0)|T_i=0] \\
+    = & \Er[Y_i(1)] - \Er[Y_i(0)]
+    = & ATE
+\end{align*}
+$$
+
+## Example: Pfizer Covid Vaccine RCT
+
+- Number of participants and number infected by treatment status
+
+| Group | Treated | Placebo|
+|-------|---------|--------|
+|All | 19965 | 20172 |
+|Infected | 9 | 169 |
+|65+| 4044 | 4067 |
+|65+ Infected | 1 | 19 |
+
+## Example Pfizer Covid Vaccine RCT
+
+
+```{python}
+#| code-fold: true
+#| output : asis
+import statsmodels.api as sm
+
+class binarybinaryrct :
+    def __init__(self, NT, NU, NYT, NYU):
+        self.NT=NT
+        self.NU=NU
+        self.NYT=NYT
+        self.NYU=NYU
+
+    def ATE(self):
+        return (self.NYT/self.NT - self.NYU/self.NU)
+
+    def table(self):
+        return("|  | Infection Rate per 1000|\n"+
+               "|---|---|\n"
+               f"|Treated| {self.NYT/self.NT*1000:.2}|\n" +
+               f"|Control| {self.NYU/self.NU*1000:.2}|\n" +
+               f"|Difference| {self.ATE()*1000:.2}|\n")
+    def VE(self):
+        tb = sm.stats.Table2x2([[self.NYT, self.NT - self.NYT], [self.NYU, self.NU - self.NYU]])
+        ve=1-tb.riskratio
+        ci = tb.riskratio_confint()
+        ci = [1-ci[1],1-ci[0]]
+        return(ve,ci)
+
+pfizerall = binarybinaryrct(19965, 20172, 9, 169)
+pfizer65 = binarybinaryrct(4044, 4067, 1, 19)
+
+print("\n- All\n\n" + pfizerall.table() + "\n - 65+\n\n" + pfizer65.table())
+```
+
+## Sources and Further Reading
+
+- [Chapter 2](https://causalml-book.org/assets/chapters/CausalML_chap_2.pdf) of @causalml2024 is the basis for much of these slides, inlcuding the Pfizer/BioNTech Covid Vaccine RCT example
+- [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
+
+## References {.scrollable}

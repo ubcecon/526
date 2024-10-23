@@ -8,28 +8,29 @@ QMDWITHCODE := $(shell grep -rl '```{python}' $(QMDFILES))
 NOTEBOOKS := $(patsubst $(SRCDIR)%,$(OUTDIR)%,$(QMDWITHCODE:.qmd=.ipynb))
 
 updaterequire:
-	source $(SRCDIR)/env/bin/activate; python -m pip freeze > $(SRCDIR)/requirements.txt
-VENVTOUCH := $(SRCDIR)/env/touchfile
+	source $(SRCDIR)/.venv/bin/activate; python -m pip freeze > $(SRCDIR)/requirements.txt
+
+VENVTOUCH := $(SRCDIR)/.venv/touchfile
 
 venv: $(VENVTOUCH)
 
-$(SRCDIR)/env/touchfile: $(SRCDIR)/requirements.txt
-	cd $(SRCDIR); test -d venv || python3 -m venv env
-	cd $(SRCDIR); source env/bin/activate; pip install -Ur requirements.txt
+$(SRCDIR)/.venv/touchfile: $(SRCDIR)/requirements.txt
+	cd $(SRCDIR); test -d .venv || python3 -m venv .venv
+	cd $(SRCDIR); source .venv/bin/activate; pip install -Ur requirements.in
 	touch $(VENVTOUCH)
 
 
-html: $(HTMLFILES) venv data
+html: $(HTMLFILES) data
 
-notebooks: $(NOTEBOOKS) venv data
+notebooks: $(NOTEBOOKS) data
 
 all: html notebooks
 
 $(OUTDIR)/%.ipynb: $(SRCDIR)/%.qmd
-	source $(SRCDIR)/env/bin/activate; quarto render $< --profile lectures --to ipynb --no-clean
+	source $(SRCDIR)/.venv/bin/activate; quarto render $< --profile lectures --to ipynb --no-clean
 
 $(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css
-	source $(SRCDIR)/env/bin/activate; quarto render $<
+	source $(SRCDIR)/.venv/bin/activate; quarto render $<
 
 deploy: all
 	cd $(OUTDIR); git add *; git commit -a -m "Automated updates to slides."; git push origin main

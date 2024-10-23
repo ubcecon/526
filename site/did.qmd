@@ -49,12 +49,8 @@ bibliography: 526.bib
 #| code-fold: true
 import warnings
 warnings.filterwarnings('ignore')
-
 import pandas as pd
-import numpy as np
-from matplotlib import style
 from matplotlib import pyplot as plt
-import seaborn as sns
 import statsmodels.formula.api as smf
 
 datadir="./data"
@@ -86,7 +82,7 @@ tbl.diff(axis=0).diff(axis=1).iloc[1,1]
 
 # Difference in Differences
 
-$$
+$$ %
 \def\Er{{\mathrm{E}}}
 \def\En{{\mathbb{E}_n}}
 \def\cov{{\mathrm{Cov}}}
@@ -113,7 +109,8 @@ $$
 ## Identification
 
 - Average treatment effect on the treated:
-$$
+
+$$ %
 \begin{align*}
 ATT & = \Er[y_{i1}(1) - \color{red}{y_{i1}(0)} | D_{i1} = 1] \\
 & = \Er[y_{i1}(1) - y_{i0}(0) | D_{i1} = 1] - \Er[\color{red}{y_{i1}(0)} - y_{i0}(0) | D_{i1}=1] \\
@@ -137,12 +134,12 @@ $$
 :::.{incremental}
 
 - Plugin:
-$$
+$$ %
 \widehat{ATT} = \frac{ \sum_{i=1}^n (y_{i1} - y_{i0})D_{i1}(1-D_{i0})}{\sum_{i=1}^n D_{i1}(1-D_{i0})} -  \frac{ \sum_{i=1}^n (y_{i1} - y_{i0})(1-D_{i1})(1-D_{i0})}{\sum_{i=1}^n (1-D_{i1})(1-D_{i0})}
 $$
 
 - Regression:
-$$
+$$ %
 y_{it} = \delta_t + \alpha 1\{D_{i1}=1\} + \beta D_{it} + \epsilon_{it}
 $$
 then $\hat{\beta} = \widehat{ATT}$
