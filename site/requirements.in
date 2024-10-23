@@ -1,0 +1,17 @@
+numpy
+statsmodels
+pandas
+patsy
+scikit-learn
+matplotlib
+seaborn
+lightgbm
+ipython
+jupyter
+ptpython
+doubleml
+CausalInference
+torch
+joblib
+scpi-pkg
+jupyter-cache

@@ -1,5 +1,6 @@
 /site/.quarto/
 /site/env/
+/site/data/
 *~
 /site/.jupyter_cache/
 /site/auto/
