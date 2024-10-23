@@ -1,6 +1,7 @@
 /site/.quarto/
-/site/env/
+/site/.venv/
 /site/data/
+/site/.gitignore
 *~
 /site/.jupyter_cache/
 /site/auto/
