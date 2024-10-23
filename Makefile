@@ -14,7 +14,7 @@ VENVTOUCH := $(SRCDIR)/.venv/touchfile
 
 venv: $(VENVTOUCH)
 
-$(SRCDIR)/.venv/touchfile: $(SRCDIR)/requirements.txt
+$(SRCDIR)/.venv/touchfile: $(SRCDIR)/requirements.in
 	cd $(SRCDIR); test -d .venv || python3 -m venv .venv
 	cd $(SRCDIR); source .venv/bin/activate; pip install -Ur requirements.in
 	touch $(VENVTOUCH)

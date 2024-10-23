@@ -230,8 +230,7 @@ $$
 
 - Advice: use the doubly robust estimator with nonparametric estimates for $\hat{E}[Y|T,X]$ and $\hat{e}(X)$
 - Recommended package:
-    - [econml](https://econml.azurewebsites.net/spec/estimation/dr.html) has the correct estimator and examples of using it with nonparametric estimates
-        - focuses on conditional instead of unconditional average treatment effects, but can be used for both
+    - [doubleml](https://docs.doubleml.org/stable/guide/models.html#interactive-regression-models-irm)
 
 ## Software
 
@@ -253,24 +252,26 @@ print(ate-1.96*se, ate, ate+1.96*se)
 ## Example: simulation
 
 ```{python}
-from econml.dr import DRLearner, LinearDRLearner, SparseLinearDRLearner
-from econml.sklearn_extensions.linear_model import StatsModelsLinearRegression
+import doubleml as dml
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
-from sklearn.preprocessing import PolynomialFeatures#
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
-est = LinearDRLearner(featurizer=PolynomialFeatures(degree=20, include_bias=False),
-                model_regression=LassoCV(),
-                model_propensity=LogisticRegressionCV(),
-                #model_final=StatsModelsLinearRegression(),
-                cv=10)
-est.fit(y, T, X=None, W=X)
+
+
+g = GradientBoostingRegressor()
+m = GradientBoostingClassifier()
+#Xpoly = PolynomialFeatures(degree=2, include_bias=False).fit_transform(X)
+#scaler = StandardScaler().fit(Xpoly)
+#Xpoly = scaler.transform(Xpoly)
+dmldata = dml.DoubleMLData.from_arrays(X, y, T)
+dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
+dmlATE.fit()
+dmlATE.summary
 ```
 
 ```{python}
-point = est.const_marginal_effect(None)
-lb, ub = est.const_marginal_effect_interval(None, alpha=0.05)
-print(lb,point,ub)
+dmlATE.causal_contrast(0).summary
 ```
 
 
@@ -469,24 +470,22 @@ ate,se,ps,ey1,ey0 = robustate(data_with_categ[T],data_with_categ[Y],data_with_ca
 print(ate-1.96*se, ate, ate+1.96*se)
 ```
 
-^[We have glossed over some details needed for doubly robust estimation to have nice statistical properties. Those details matter and are not implemented correctly above. It is better to use the econml instead.]
+^[We have glossed over some details needed for doubly robust estimation to have nice statistical properties. Those details matter and are not implemented correctly above. It is better to use doubleml instead.]
 
 ## Doubly Robust
 
-- better to use the `econml` package
+- better to use the `doubleml` package
 
 ```{python}
-from econml.dr import DRLearner, LinearDRLearner, SparseLinearDRLearner
+import doubleml as dml
 
-est = LinearDRLearner(#featurizer=PolynomialFeatures(degree=2, include_bias=False),
-                model_regression=LassoCV(),
-                model_propensity=LogisticRegressionCV(),
-                cv=5)
-
-est.fit(data_with_categ[Y], data_with_categ[T], X=None, W=data_with_categ[X])
-point = est.const_marginal_effect(None)
-lb, ub = est.const_marginal_effect_interval(None, alpha=0.05)
-print(lb,point,ub)
+m = LassoCV()
+g = LogisticRegressionCV()
+dmldata = dml.DoubleMLData(data_with_categ, 'Y','T','X')
+dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
+dmlATE.fit()
+dmlATE.summary
+dmlATE.causal_contrast(0).summary
 ```
 
 ## Sources and Further Reading

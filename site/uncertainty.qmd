@@ -18,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: ""
+          data-background-image: "fowlpond.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -46,7 +46,12 @@ $$
 
 ## Summary
 
--
+- Standard errors
+- Confidence intervals
+- Standard errors for functions of estimates
+  - Delta method
+  - Simulation
+- Bootstrap
 
 
 # Introduction
@@ -459,10 +464,44 @@ plt.show()
 
 bootstrapci(dgp(n), estimator)
 ```
+# Complications and Warnings
 
+## Multiple Testing
+
+- If construct many confidence intervals, there is high change at least one will not contain the true parameter
+  - 65% chance with twenty 95% confidence intervals
+- Trying many things and only focusing on "statistically significant" results only leads to spurious conclusions
+
+
+## Dependence
+
+- Standard errors require assumptions limiting dependence
+  - Independent observations
+  - Not-too-dependent observations
+    - Clustered (for panel or grouped data)
+    - Stationary (for time series)
+- Bootstrap needs to be modified for dependence
+
+## Pathological Parameter Values
+
+- Usual asymptotics (CLT, bootstrap, etc) don't work if
+  - True parameter on boundary (e.g. variance = 0)
+  - True parameter near value where distribution of estimator discontinuous
+    - Weak instruments
+    - Unit root
+
+## High Dimensions
+
+- Number of parameters ($p$) large compared to sample size ($n$)
+- Usual asymptotics break down
+- Risk of overfitting
+- Inference difficult, but possible
+  - @causalml2024 chapter 4
+- More later ...
 
 ## Sources and Further Reading
 
 - [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html.html) of @facure2022
+- [Chapter 1](https://causalml-book.org/) of @causalml2024
 
 ## References {.scrollable}
