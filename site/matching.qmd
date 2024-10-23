@@ -481,8 +481,8 @@ import doubleml as dml
 
 m = LassoCV()
 g = LogisticRegressionCV()
-dmldata = dml.DoubleMLData(data_with_categ, 'Y','T','X')
-dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
+dmldata = dml.DoubleMLData(data_with_categ, Y,T,X.to_list())
+dmlATE = dml.DoubleMLAPOS(dmldata, m, g, treatment_levels=[0, 1])
 dmlATE.fit()
 dmlATE.summary
 dmlATE.causal_contrast(0).summary

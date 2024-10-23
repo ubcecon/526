@@ -6,29 +6,36 @@ bibliography: 526.bib
 
 # Slides
 
-1. [Introduction to Causlity](causuality_intro.qmd), [notebook](cauality_intro.ipynb)
+1. [Introduction to Causlity](causality_intro.qmd), [notebook](causality_intro.ipynb)
    - Reading: [Chapter 2](https://causalml-book.org/assets/chapters/CausalML_chap_2.pdf) of @causalml2024 or [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
 
-3. [Matching slides](matching.qmd), [notebook](matching.ipynb)
+2. [Uncertainty Quantification](uncertainty.qmd), [notebook](uncertainty.ipynb)
+   - [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html.html) of @facure2022
+
+3. [Linear regression](regression.qmd), [notebook](regression.ipynb)
+
+4. [Matching slides](matching.qmd), [notebook](matching.ipynb)
    - Reading:  [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
 
-4. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
+5. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
    - Reading: [chapter 13](https://matheusfacure.github.io/python-causality-handbook/13-Difference-in-Differences.html) of @facure2022
 
-5. [Fixed Effects](fe.qmd), [notebook](fe.ipynb)
+6. [Fixed Effects](fe.qmd), [notebook](fe.ipynb)
    - Reading: [chapter 14](https://matheusfacure.github.io/python-causality-handbook/14-Panel-Data-and-Fixed-Effects.html) of @facure2022
 
-6. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
+7. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
    - Reading: [chapter 24](https://matheusfacure.github.io/python-causality-handbook/24-The-Diff-in-Diff-Saga.html) of @facure2022, @roth2023, @dd2022
 
-7. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
+8. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
 
-8. [Double/Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
+9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
+
+10. [Double/Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
    - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
 
-9. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
+11. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
    - Reading: [QuantEcon: Heterogeneity](https://datascience.quantecon.org/applications/heterogeneity.html)
 
-10. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
+12. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
    - Reading: [QuantEcon Datascience: Regression - Neural Networks](https://datascience.quantecon.org/tools/regression.html#neural-networks)

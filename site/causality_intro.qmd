@@ -6,7 +6,7 @@ author:
     email: paul.schrimpf@ubc.ca
     affiliations: University of British Columbia
 format:
-    revealjs:
+  revealjs:
         min-scale: 0.1
         smaller: true
         toc: true
@@ -199,7 +199,7 @@ $$
 $$
 \begin{align*}
 APE = & \Er[Y_i(1)|T_i=1] - \Er[Y_i(0)|T_i=0] \\
-    = & \Er[Y_i(1)] - \Er[Y_i(0)]
+    = & \Er[Y_i(1)] - \Er[Y_i(0)] \\
     = & ATE
 \end{align*}
 $$
@@ -219,8 +219,7 @@ $$
 
 
 ```{python}
-#| code-fold: true
-#| output : asis
+#| output : slide
 import statsmodels.api as sm
 
 class binarybinaryrct :
