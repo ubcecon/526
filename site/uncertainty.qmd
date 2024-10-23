@@ -116,9 +116,10 @@ print("\n- All\n\n" + pfizerall.table() + "\n - 65+\n\n" + pfizer65.table())
 
 :::
 
+:::
+
 # Standard Errors
 
-:::
 
 ## Standard Errors
 
@@ -279,8 +280,8 @@ plo, phi=proportionci(phat,pfizerall.NT)
 
 If $X_i$ are i.i.d. with $\Er[X] = 0$ and $\var(X)=1$, then
 $$
-\sup_{x \in \R} P\left( \left\vert
-P\left(\frac{1}{\sqrt{n}} \sum_{i=1}^n X_i \leq x \right) - \Phi(X) \right\vert \right) \leq C \Er[|X|^3]/\sqrt{n}
+\sup_{z \in \R} \left\vert
+P\left(\left[\frac{1}{\sqrt{n}} \sum_{i=1}^n X_i\right] \leq z \right) - \Phi(z) \right\vert \leq 0.5 \Er[|X|^3]/\sqrt{n}
 $$
 where $\Phi$ is the normal CDF.
 
@@ -294,8 +295,8 @@ where $\Phi$ is the normal CDF.
 
 If $X_i \in \R^d$ are i.i.d. with $\Er[X] = 0$ and $\var(X)=I_d$, then
 $$
-\sup_{A \subset \R^d, \text{convex}} P\left( \left\vert
-P\left(\frac{1}{\sqrt{n}} \sum_{i=1}^n X_i \in A \right) - P(N(0,I_d) \in A) \right\vert \right) \leq
+\sup_{A \subset \R^d, \text{convex}} \left\vert
+P\left(\frac{1}{\sqrt{n}} \sum_{i=1}^n X_i \in A \right) - P(N(0,I_d) \in A) \right\vert \leq
 (42 d^{1/4} + 16) \Er[\Vert X \Vert ^3]/\sqrt{n}
 $$
 
@@ -382,12 +383,14 @@ def deltamethod(g, theta, Omega) :
 print(f"Efficacy among everyone is {ve(theta):.3} ({deltamethod(ve,theta,Omega)[0,0]**0.5:.2})")
 ```
 
-## Simulation
+## Simulating Distribution of $g(\theta)$
 
 - Suppose $\sqrt{n} (\hat{\theta} - \theta_0) \leadsto N(0,\Omega)$
 - Create $\tilde{\theta}_s \sim N(\hat{\theta}, \Omega/n)$
    - so $\sqrt{n}(\tilde{\theta}_s - \hat{\theta}) \sim N(0,\Omega)$
 - and $\sqrt{n}(g(\theta_{s}) - g(\hat{\theta})) \approx \sqrt{n}(g(\hat{\theta}) - g(\theta_0))$
+
+## Simulated Distribution of Vaccine Efficacy
 
 ```{python}
 #| output-location: column
@@ -399,7 +402,11 @@ def simulateg(g,theta,Omega,S=10_000):
 gs, gv=simulateg(ve, theta, Omega)
 print(f"simulation se = {gv**0.5:.2}")
 
-plt.hist(gs, bins=50, alpha=0.5)
+plt.hist(gs, bins=50, alpha=0.5, density=True)
+dse = deltamethod(ve,theta,Omega)[0,0]**0.5
+z = np.linspace(-3,3,num=100)*dse + ve(theta)
+fdeltamethod = scipy.stats.norm(loc=ve(theta), scale=dse).pdf
+plt.plot(z, fdeltamethod(z))
 plt.title("Distribution of Vaccine Efficacy")
 plt.show()
 ```
