@@ -1,0 +1,55 @@
+---
+title: "Instrumental Variables"
+subtitle: "ECON526"
+author:
+  - name: Paul Schrimpf
+    email: paul.schrimpf@ubc.ca
+    affiliations: University of British Columbia
+format:
+    revealjs:
+        min-scale: 0.1
+        smaller: true
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: ""
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+
+# Overview
+
+$$
+\def\indep{\perp\!\!\!\perp} % \def\idp{\perp\kern-5pt\perp}
+\def\Er{\mathrm{E}}
+\def\var{\mathrm{Var}}
+\def\R{\mathbb{R}}
+\def\En{{\mathbb{E}_n}}
+\def\Pr{\mathrm{P}}
+\newcommand{\norm}[1]{\left\Vert {#1} \right\Vert}
+\newcommand{\abs}[1]{\left\vert {#1} \right\vert}
+\def\inprob{{\,{\buildrel p \over \rightarrow}\,}}
+\def\indist{\,{\buildrel d \over \rightarrow}\,}
+\DeclareMathOperator*{\plim}{plim}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+$$
+
+
+
+## Sources and Further Reading
+
+- [Chapter 8](https://matheusfacure.github.io/python-causality-handbook/08-Instrumental-Variables.html) of @facure2022
+
+- Chapters 6, 12, and 13 of @causalml2024
+
+- [The Effect: Chapter 19 - Instrumental Variables](https://www.theeffectbook.net/ch-InstrumentalVariables.html) @hk2021

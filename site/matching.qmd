@@ -25,6 +25,7 @@ execute:
   echo: true
 bibliography: 526.bib
 ---
+
 # Introduction
 
 ## Setting
@@ -178,12 +179,12 @@ where $\hat{E}[Y|T,X]$ is some flexible estimator for $\Er[Y|T,X]$
 
 ## Propensity Score
 
-- Let $e(X) = P(T=1|X=X)$
+- Let $p(X) = P(T=1|X=X)$
 - Note:
 $$
 \begin{align*}
-\Er[Y|X,T=1] - \Er[Y|X,T=0] = & E\left[\frac{Y T}{e(X)}|X \right] - E\left[\frac{Y(1-T)}{1-e(X)}|X \right] \\
-= & E\left[ Y \frac{T - e(X)}{e(X)(1-e(X))} | X \right]
+\Er[Y|X,T=1] - \Er[Y|X,T=0] = & E\left[\frac{Y T}{p(X)}|X \right] - E\left[\frac{Y(1-T)}{1-p(X)}|X \right] \\
+= & E\left[ Y \frac{T - p(X)}{p(X)(1-p(X))} | X \right]
 \end{align*}
 $$
 
@@ -191,16 +192,16 @@ $$
 
 - so
 $$
-ATE = \Er\left[ \frac{Y T}{e(X)} -  \frac{Y(1-T)}{1-e(X)}\right] = \Er\left[ Y \frac{T - e(X)}{e(X)(1-e(X))} \right]
+ATE = \Er\left[ \frac{Y T}{p(X)} -  \frac{Y(1-T)}{1-p(X)}\right] = \Er\left[ Y \frac{T - p(X)}{p(X)(1-p(X))} \right]
 $$
 
 ## Inverse propensity weighting
 
 - Estimator
 $$
-\widehat{ATE}^{IPW} = \frac{1}{n} \sum_{i=1}^n \frac{Y_iT_i}{\hat{e}(X_i)} - \frac{Y_i(1-T_i)}{1-\hat{e}(X_i)}
+\widehat{ATE}^{IPW} = \frac{1}{n} \sum_{i=1}^n \frac{Y_iT_i}{\hat{p}(X_i)} - \frac{Y_i(1-T_i)}{1-\hat{p}(X_i)}
 $$
-where $\hat{e}(X)$ is some flexible estimator for $P(T=1|X)$
+where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
 
 - Downside:
   - Difficult statistical properties --- choice of tuning parameters, strong assumptions needed
@@ -211,31 +212,31 @@ where $\hat{e}(X)$ is some flexible estimator for $P(T=1|X)$
 $$
 \begin{align*}
 \widehat{ATE}^{DR} = & \frac{1}{n} \sum_{i=1}^n \hat{E}[Y|T=1,X=X_i] - \hat{E}[Y|T=0,X=X_i] + \\
-& + \frac{1}{n} \sum_{i=1}^n  \frac{T_i(Y_i - \hat{E}[Y|T=1,X=X_i])}{\hat{e}(X_i)} - \\
-& - \frac{(1-T_i)(Y_i - \hat{E}[Y|T=0,X=X_i])} {1-\hat{e}(X_i)}
+& + \frac{1}{n} \sum_{i=1}^n  \frac{T_i(Y_i - \hat{E}[Y|T=1,X=X_i])}{\hat{p}(X_i)} - \\
+& - \frac{(1-T_i)(Y_i - \hat{E}[Y|T=0,X=X_i])} {1-\hat{p}(X_i)}
 \end{align*}
 $$
 
 ## Doubly Robust Estimator
 
 - Doubly robust in that:
-  - Consistent as long as either $\hat{e}(X) \inprob e(X)$ or $\hat{E}[Y|T,X] \inprob \Er[Y|T,X]$
-  - Insensitive to small changes in $\hat{e}(X)$ or $\hat{E}[Y|T,X]$
+  - Consistent as long as either $\hat{p}(X) \inprob p(X)$ or $\hat{E}[Y|T,X] \inprob \Er[Y|T,X]$
+  - Insensitive to small changes in $\hat{p}(X)$ or $\hat{E}[Y|T,X]$
 
 - Allows: nicer statistical properties
   - Weaker assumptions needed
-  - Asymptotic distribution is the same as if $e(X)$ and $\Er[Y|T,X]$ were known
+  - Asymptotic distribution is the same as if $p(X)$ and $\Er[Y|T,X]$ were known
 
 ## Software
 
-- Advice: use the doubly robust estimator with nonparametric estimates for $\hat{E}[Y|T,X]$ and $\hat{e}(X)$
+- Advice: use the doubly robust estimator with nonparametric estimates for $\hat{E}[Y|T,X]$ and $\hat{p}(X)$
 - Recommended package:
     - [doubleml](https://docs.doubleml.org/stable/guide/models.html#interactive-regression-models-irm)
 
 ## Software
 
 - Other packages:
-    - [causalinference](https://github.com/laurencium/Causalinference) has a double robust estimator, but it estimates $\hat{E}[Y|T,X]$ via linear regression and $\hat{e}(X)$ via logit (maybe probit, not sure)
+    - [causalinference](https://github.com/laurencium/Causalinference) has a double robust estimator, but it estimates $\hat{E}[Y|T,X]$ via linear regression and $\hat{p}(X)$ via logit (maybe probit, not sure)
         - can make nonparametric by adding e.g. powers of $x$ to $X$, but need to manage manually
     - [zEpid](https://zepid.readthedocs.io/en/stable/Reference/generated/zepid.causal.doublyrobust.AIPW.AIPTW.html#zepid.causal.doublyrobust.AIPW.AIPTW) is similiar to causalinference, but has a formula interface, so slightly easier to make model more flexible
 
@@ -491,6 +492,8 @@ dmlATE.causal_contrast(0).summary
 ## Sources and Further Reading
 
 - Useful additional reading is [chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022 and [chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021.^[These slides do not mention the importance of overlap/balance, but hopefully I emphasized it during lecture. Overlap is very important in practice. The reading, especially @hk2021, cover it pretty well. ]
+
+- Chapters 5 and 10 of @causalml2024
 
 - The representation of the estimate from a linear model as a weighted average is based on @borusyak2018
 

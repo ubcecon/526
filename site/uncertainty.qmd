@@ -306,6 +306,49 @@ $$
 
 :::
 
+## Simulated Illustration of Berry-Esseen CLT
+
+```{python}
+def dgp(n, xhi=2):
+    p = 1/(1+xhi**2)
+    xlo = -p*xhi/(1-p)
+    hi = np.random.uniform(0,1,n)<p # so var(x)=1
+    x = np.where(hi, xhi, xlo)
+    return x
+
+print(f"var(x) is about {np.var(dgp(100_000)):.2}")
+
+def Ex3(xhi):
+    p = 1/(1+xhi**2)
+    xlo = -p*xhi/(1-p)
+    return p*xhi**3 + (1-p)*-xlo**3
+
+e3 = np.mean(np.pow(np.abs(dgp(100_000)),3))
+print(f"E[|x|^3] is about {e3:.2}, exact is {Ex3(5):.2}")
+
+def plotcdfwithbounds(dgp,  e3, n=[10,100,1000], S=9999):
+    cmap = sns.color_palette("tab10")
+    x = np.linspace(-4.5, 4.5, num=200)
+    cdfx= scipy.stats.norm().cdf(x)
+    plt.plot(x, cdfx, label="Normal", color="black", linestyle="dashed")
+    for i in range(len(n)):
+        truedist = [dgp(n[i]).mean()*np.sqrt(n[i]) for _ in range(S)]
+        sns.ecdfplot(truedist, label=f"n={n[i]}", color=cmap[i])
+        plt.fill_between(x, cdfx - 0.5*e3/np.sqrt(n[i]), cdfx + 0.5*e3/np.sqrt(n[i]), alpha=0.2, color=cmap[i])
+    plt.legend()
+    plt.xlim(-2.5,2.5)
+    plt.show()
+    plt.title("Distribution of Scaled Sample Mean")
+
+plotcdfwithbounds(dgp, e3)
+```
+
+::: {.notes}
+
+This particular DGP of a skewed distribution with two points of support is the worst in terms of getting close to the bound. Esseen showed the best error is greater than $0.4 \Er[|X|^3]/\sqrt{n}$ for a similar distribution.
+
+:::
+
 ## Approximate Confidence Interval
 
 ```{python}
@@ -435,17 +478,11 @@ import seaborn as sns
 
 def dgp(n):
     x = np.exp(abs(np.random.normal(0,1,n)))
-    # x = np.random.normal(0,1,n)
     return x
 
 def estimator(x):
-    return np.median(x)
+    return np.mean(x)
 
-n = 100
-S = 9999
-# simulate true distribution of estimator
-true = estimator(dgp(n*100_00))
-mediansims = [estimator(dgp(n)) - true for _ in range(S)]
 
 def bootstrap(data, estimator, B=999):
     n = len(data)
@@ -453,23 +490,94 @@ def bootstrap(data, estimator, B=999):
     bestimates = [estimator(np.random.choice(data,size=n, replace=True))-est for _ in range(B)]
     return bestimates
 
-sns.ecdfplot(mediansims, label="True distribution", linewidth=3)
+def cltdistmean(data, B=999):
+    return np.random.normal(0,np.sqrt(np.var(data)/len(data)),B)
+
+cmap = sns.color_palette("tab10")
+n = 20
+B = 999
+true = estimator(dgp(n*10_000))
+# simulate true distribution of estimator
+estsims = [estimator(dgp(n)) - true for _ in range(S)]
+sns.ecdfplot(estsims, label="True distribution", linewidth=3, color="black")
 for b in range(3):
-    sns.ecdfplot(bootstrap(dgp(n), estimator), alpha=0.5, label=f"Bootstrap {b}")
+    data = dgp(n)
+    sns.ecdfplot(bootstrap(data, estimator, B=B), alpha=0.5, label=f"Bootstrap {b}", color=cmap[b])
+    sns.ecdfplot(cltdistmean(data,B=10*B), alpha=0.5,
+                 label=f"CLT {b}", color=cmap[b], linestyle='dashed')
+
+sd=np.std(estsims)
+plt.xlim(-2.5*sd,2.5*sd)
 plt.legend()
+plt.title(f"True CDF and Approximate CDFs for three data realizations with n={n}")
+plt.show()
+```
+
+## Bootstrap
+
+- Error of the bootstrap is the same size as error of CLT except in special circumstances
+
+- Bootstrap has smaller error if used for a statistic whose asymptotic distribution is known
+  - E.g.
+  $$
+  z = \sqrt{n}(\bar{x} - \Er[x]) \leadsto N(0, \var(x))
+  $$
+  is not pivotal because limiting distribution depends on $\var(x)$
+  - E.g.
+  $$
+  t = \sqrt{n}(\bar{x} - \Er[x])/\hat{\sigma}_x \leadsto N(0, 1)
+  $$
+  is pivotal
+
+## Bootstrap for Pivotal Statistic
+
+```{python}
+def estimator(data) :
+    return np.mean(data), np.std(data)/np.sqrt(len(data))
+
+def tbootstrap(data, estimator, B=999):
+    n = len(data)
+    bestimates = np.zeros(B)
+    est = estimator(data)
+    for b in range(B):
+        eb = estimator(np.random.choice(data,size=n, replace=True))
+        bestimates[b] = (eb[0]-est[0])/eb[1]
+    return bestimates
+
+cmap = sns.color_palette("tab10")
+true = estimator(dgp(n*10_000))
+# simulate true distribution of estimator
+estsims = np.zeros(S)
+for s in range(S):
+    m, sd = estimator(dgp(n))
+    estsims[s] = (m-true[0])/sd
+
+sns.ecdfplot(estsims, label="True distribution", linewidth=3, color="black")
+for b in range(3):
+    data = dgp(n)
+    sns.ecdfplot(tbootstrap(data, estimator, B=B), alpha=0.5, label=f"Pivotal Bootstrap {b}", color=cmap[b])
+
+x = np.linspace(-4.5, 4.5, num=200)
+cdfx= scipy.stats.norm().cdf(x)
+plt.plot(x, cdfx, label="Normal", color="black", linestyle="dashed")
+
+sd=np.std(estsims)
+plt.xlim(-2.5*sd,2.5*sd)
+plt.legend()
+plt.title(f"True CDF and Approximate CDFs for t-stat for three data realizations with n={n}")
 plt.show()
 ```
 
 ## Bootstrap Confidence Interval
 
 ```{python}
- def bootstrapci(data, estimator, B=999, level=0.95):
+def bootstrapci(data, estimator, B=999, level=0.95):
     estimates = bootstrap(data, estimator, B)
     lo = np.percentile(estimates, 100*(1-level)/2) + estimator(data)
     hi = np.percentile(estimates, 100*(1-(1-level)/2)) + estimator(data)
     return lo, hi
 
-bootstrapci(dgp(n), estimator)
+bootstrapci(dgp(n), np.mean)
 ```
 # Complications and Warnings
 

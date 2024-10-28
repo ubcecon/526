@@ -1,0 +1,467 @@
+---
+title: "Linear Regression"
+subtitle: "ECON526"
+author:
+    - name: Paul Schrimpf
+      affiliations: University of British Columbia
+format:
+    revealjs:
+        width: 1600
+        height: 900
+        min-scale: 0.1
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: "youngtraverse.jpg"
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+# Review of Linear Regression
+
+$$
+\def\Er{{\mathrm{E}}}
+\def\En{{\mathbb{En}}}
+\def\cov{{\mathrm{Cov}}}
+\def\var{{\mathrm{Var}}}
+\def\R{{\mathbb{R}}}
+\def\indep{{\perp\!\!\!\perp}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\def\rank{{\mathrm{rank}}}
+\newcommand{\inpr}{ \overset{p^*_{\scriptscriptstyle n}}{\longrightarrow}}
+\def\inprob{{\,{\buildrel p \over \rightarrow}\,}}
+\def\indist{\,{\buildrel d \over \rightarrow}\,}
+\DeclareMathOperator*{\plim}{plim}
+\DeclareMathOperator*{\argmin}{argmin}
+$$
+
+## Regression for RCT
+
+- Create a dataframe to represent the Pfizer Covid vaccine trial
+
+```{python}
+#| code-fold : true
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt
+from statsmodels.iolib.summary2 import summary_col
+import os
+import requests
+```
+
+```{python}
+#| code-fold : true
+def pfizerrctdata():
+    n1 = 19965
+    n0 = 20172
+    y1 = 9
+    y0 = 169
+    n1o = 4044
+    n0o = 4067
+    y1o = 1
+    y0o = 19
+    over65 = np.zeros(n1 + n0)
+    over65[0:(n1o+n0o)] = 1
+    treat = np.concatenate([np.ones(n1o), np.zeros(n0o), np.ones(n1-n1o), np.zeros(n0-n0o)])
+    infected = np.concatenate([np.ones(y1o), np.zeros(n1o-y1o), np.ones(y0o), np.zeros(n0o-y0o),
+                               np.ones(y1-y1o), np.zeros(n1-n1o-(y1-y1o)),
+                               np.ones(y0-y0o), np.zeros(n0-n0o-y0+y0o)])
+    data = pd.DataFrame({'treat': treat, 'infected': infected, 'over65': over65})
+    return data
+
+data = pfizerrctdata()
+
+data.groupby(['over65', 'treat']).mean()
+```
+
+## ATE
+
+```{python}
+#|code-fold : true
+def ATE(data, treatment='treat', y='infected'):
+    means=data.groupby(treatment)[y].mean()
+    ATE = means[1] - means[0]
+    se = sum(data.groupby(treatment)[y].var()/data.groupby(treatment)[y].count())**0.5
+    return ATE, se
+
+ate=ATE(data.loc[data['over65']==1,:])
+print(f"difference in means = {ate[0]}, SE = {ate[1]}")
+```
+- Regression estimate
+$$
+y_i = \beta_0 + \beta_1 T_i + \epsilon_i
+$$
+  - $\Er[Y_i\mid T_i] = \beta_0 + \beta_1 T_i + \epsilon_i$
+  $$
+  \begin{align*}
+  ATE = & \Er[Y_i\mid T_i=1] - E[Y_i\mid T_i=0] \\
+  = & (\beta_0 + \beta_1*1)-(\beta_0 + \beta_1 * 0) \\
+   = & \beta_1
+   \end{align*}
+   $$
+
+
+```{python}
+reg=smf.ols('infected ~ treat', data=data.loc[data['over65']==1,:]).fit()
+print(f"regression estimate={reg.params[1]:3}, se={reg.bse[1]:5}")
+```
+
+
+## Heteroskedasticity Robust Standard Errors
+
+```{python}
+olsse = np.sqrt(np.diag(smf.ols('infected ~ treat',data=data.loc[data['over65']==1]).fit().cov_params())[1])
+print(f"OLS SE: {olsse}, manual SE: {ate[1]}")
+```
+- But standard error very slightly different
+
+- Default of `smf.ols` assumes homoskedasticiy $\Er[\epsilon^2|X] = \sigma^2$
+
+- With $y$ and $T$, binary, $\Er[\epsilon^2|T] = P(y=1|T)(1-P(y=1|T))$
+
+```{python}
+olshcse = np.sqrt(np.diag(smf.ols('infected ~ treat',data=data.loc[data['over65']==1]).fit(cov_type="HC3").cov_params())[1])
+print(f"OLS HC SE: {olshcse}, manual SE: {ate[1]}")
+```
+
+- **always use heteroskedasticity robust standard errors**
+
+## Multiple Regression
+
+- $y \in \R^n$, $X \in \R^{n \times k}$
+$$ %
+\begin{align*}
+\hat{\beta} & \in \argmin_{\beta} \Vert y - X \beta \Vert_2^2 \\
+\hat{\beta} & \in \argmin_{\beta} \sum_{i=1}^n (y_i - x_i' \beta)^2
+\end{align*}
+$$
+- Population regression
+$$
+\begin{align*}
+\beta_0 & \in \argmin_{\beta} \Er[(y - x'\beta)^2] \\
+\beta_0 & \in \argmin_{\beta} \Er[(\Er[y|x] - x'\beta)^2]
+\end{align*}
+$$
+  - best linear approximation to conditional expectation
+
+## Large Sample Behavior
+
+- With appropriate assumptions,
+  - consistent $\hat{\beta} \inprob \beta_0$
+  - asymptotically normal
+$$
+\sqrt{n}(\hat{\beta} - \beta_0) \indist N\left(0, \Er[xx']^{-1} \Er[xx'\epsilon^2] \Er[xx']^{-1} \right)
+$$
+
+## Ceteris Paribus
+
+- Regression estimates $\beta_0 \in \argmin_{\beta} \Er[(\Er[y|x] - x'\beta)^2]$
+  - $x'\beta_0$ is the best linear approximation to $\Er[y|x]$
+  - $\frac{\partial}{\partial x_1}\Er[y|x] \approx \beta_{0,1}$ is the change in $x_1$ holding the rest of $x$ constant
+
+
+## Example: Gender Earnings Gap
+
+```{python}
+#| output-location : slide
+import os
+import requests
+url = 'https://www.nber.org/morg/annual/morg23.dta'
+local_filename = 'data/morg23.dta'
+
+if not os.path.exists(local_filename):
+    response = requests.get(url)
+    with open(local_filename, 'wb') as file:
+        file.write(response.content)
+
+cps=pd.read_stata(local_filename)
+cps["female"] = (cps.sex==2)
+cps["log_earn"] = np.log(cps["earnwke"])
+cps["log_uhours"] = np.log(cps.uhourse)
+cps["log_hourslw"] = np.log(cps.hourslw)
+cps.replace(-np.inf, np.nan, inplace=True)
+cps["nevermarried"] = cps.marital==7
+cps["wasmarried"] = (cps.marital >= 4) & (cps.marital <= 6)
+cps["married"] = cps.marital <= 3
+
+lm = list()
+lm.append(smf.ols(formula="log_earn ~ female", data=cps,
+                  missing="drop").fit(cov_type='HC3'))
+lm.append(smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps,
+                  missing="drop").fit(cov_type='HC3'))
+lm.append(smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours + wasmarried + married", data=cps,
+                  missing="drop").fit(cov_type='HC3'))
+lm.append(smf.ols(formula="log_earn ~ female*(wasmarried+married) + log_hourslw + log_uhours", data=cps,
+                  missing="drop").fit(cov_type='HC3'))
+
+summary_col(lm, stars=True)
+```
+
+## Partialling Out
+
+$$y_i = x_i \beta + w_i'\gamma + u_i$$
+- Can equivalently calculate $\beta$ by
+  - Multiple regression of $y$ on $x$ and $w$, or
+
+```{python}
+smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps, missing="drop").fit(cov_type="HC3").params[1]
+```
+
+  - Bivariate regression of residuals from regressing $y$ on $w$, on the residuals from regression $x$ on $w$
+
+```{python}
+ey=smf.ols(formula="log_earn ~ log_hourslw + log_uhours", data=cps, missing="drop").fit().resid
+ex=smf.ols(formula="I(1*female) ~ log_hourslw + log_uhours", data=cps, missing="drop").fit().resid
+edf = pd.concat([ex,ey],axis=1)
+edf.columns=['ex','ey']
+smf.ols('ey ~ ex', data=edf).fit(cov_type="HC3").params[1]
+```
+
+## Omitted Variables
+
+- If we want
+$$
+y_i = \beta_0 + x_i \beta + w_i'\gamma + u_i
+$$
+- But only regression $y$ on $x$, then
+$$
+\hat{\beta}^s = \hat{\beta} + \frac{ \sum (x_i - \bar{x})w_i'}{\sum (x_i - \bar{x})^2} \hat{\gamma}
+$$
+and
+$$
+\hat{\beta}^s \inprob \beta + \frac{ \Er[(x_i - \Er[x])w_i']}{\var(x_i)} \gamma
+$$
+
+- Useful for:
+  - Understanding mechanically why coefficients change when we add/remove variables
+  - Speculating about direction of bias when we some variables are unobserved
+
+
+## More Conditioning
+
+```{python}
+import pyfixest as pf
+
+controls="age + I(age**2) | race + grade92 + unionmme + unioncov +  ind17 + occ18"
+allcon=pf.feols("log_earn ~ female*(wasmarried + married) + log_hourslw + log_uhours + " + controls, data=cps,vcov='hetero')
+allcon.summary()
+```
+
+# Regression for RCTs
+
+## Regression for RCTs
+
+- RCT with outcome $Y$, treatment $T$, other variables $X$
+
+- Should we estimate ATE in a regression that includes $X$?
+
+## Simulated RCT
+
+- from @causalml2024 chapter 2 (who got the setup from Roth)
+
+```{python}
+np.random.seed(54)
+n = 1000             # sample size
+Z = np.random.normal(size=n)         # generate Z
+Y0 = -Z + np.random.normal(size=n)   # conditional average baseline response is -Z
+Y1 = Z + np.random.normal(size=n)    # conditional average treatment effect is +Z
+D = np.random.binomial(1, .2, size=n)    # treatment indicator; only 20% get treated
+Y = Y1 * D + Y0 * (1 - D)  # observed Y
+Z = Z - Z.mean()       # demean Z
+data = pd.DataFrame({"Y": Y, "D": D, "Z": Z})
+print(f"Sample ATE = {np.mean(Y1-Y0):.3}")
+```
+
+- Populatoin ATE is $0$
+
+## Simulated RCT
+
+```{python}
+hc = 'HC0'
+m1=smf.ols('Y ~ D',data=data).fit(cov_type=hc)
+madd=smf.ols('Y ~ D + Z',data=data).fit(cov_type=hc)
+summary_col([m1, madd], model_names=['simple','additive'])
+```
+
+## Simulated RCT
+
+```{python}
+minteract=smf.ols('Y ~ D + Z*D',data=data).fit(cov_type=hc)
+summary_col([m1, madd, minteract],model_names=['simple','additive','interactive'])
+```
+
+## If $T \indep X$, Interactive Model Reduces Variance
+
+- Assume $T \indep (X, Y(0), Y(1))$, $T \in \{0,1\}$, $\Er[X] = 0$
+- Consider
+$$
+\begin{align*}
+Y & = \beta_0^s + \beta_1^s T + \epsilon^s \\
+Y & = \beta_0^a + \beta_1^a T + X'\gamma^a_0 + \epsilon^s \\
+Y & = \beta_0^i + \beta_1^i T + X'\gamma^i_0 + TX'\gamma^i_1\epsilon^s
+\end{align*}
+$$
+- All are consistent
+$$
+\plim \hat{\beta}_1^s = \plim \hat{\beta}_1^a = \plim \hat{\beta}_1^i = ATE
+$$
+- Interactive has smaller variance
+$$
+\var(\hat{\beta}_1^i) \leq \var(\hat{\beta}_1^s) \text{ and } \var(\hat{\beta}_1^i) \leq \var(\hat{\beta}_1^a)
+$$
+
+
+## Collections and Payment Reminders
+
+- Data from credit firm
+- Treatment = email reminder to repay
+- Outcome = payments
+- Other variables
+   - credit limit
+   - risk score
+   - whether email openned
+   - whether agreed to repay after opening email
+
+::: {.aside}
+From chapter 7 of @facure2022
+:::
+
+
+## Collections and Payment Reminders
+
+```{python}
+#| code-fold : true
+filename = 'data/collections_email.csv'
+url = 'https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/refs/heads/master/causal-inference-for-the-brave-and-true/data/collections_email.csv'
+if not os.path.exists(filename):
+    response = requests.get(url)
+    with open(filename, 'wb') as file:
+        file.write(response.content)
+
+data = pd.read_csv(filename)
+data.describe()
+```
+
+## Collections and Payment Reminders
+
+```{python}
+#| code-fold : true
+lm = list()
+lm.append(smf.ols(formula="payments ~ email", data=data).fit(cov_type='HC3'))
+lm.append(smf.ols(formula="payments ~ email + credit_limit + risk_score",data=data).fit(cov_type='HC3'))
+lm.append(smf.ols(formula="payments ~ email + credit_limit + risk_score + opened + agreement",data=data).fit(cov_type='HC3'))
+summary_col(lm, stars=True)
+```
+
+## Collections and Payment Reminders
+
+- Which specification make sense?
+- Any red-flags in the results?
+- What conclusions can we draw?
+
+## "Bad controls" or Mediators or  Colliders
+
+::: {.aside}
+
+@facure2022 calls controlling for `opened` and `agreement` "selection bias," but in economics, we would not call it that. We would refer to `opened` and `agreement` as bad controls because they mediate the outcome of interest. We would not want hold them constant because part of how `email` affects `payments` is by changing `opened`  and `agreement`.
+
+Since at least @heckman1976 and @heckman1979 selection bias refers to when the expectation of an outcome conditional on observing it is not equal to the expectation in the population. As far as I know, calling conditioning on mediators "selection bias" was popularized by @hernan2004 in epidemiology and spread to other field.s  If you want to avoid confusion, one coould call @heckman1976 selection bias "self-selection bias" or "Heckman selection bias," and call @hernan2004 selection bias "collider bias" or "mediator bias."
+
+:::
+
+## Drug Trial at Two Hospitals
+
+```{python}
+#| output : asis
+#| code-fold : true
+filename = 'data/hospital_treatment.csv'
+url = 'https://raw.githubusercontent.com/matheusfacure/python-causality-handbook/refs/heads/master/causal-inference-for-the-brave-and-true/data/hospital_treatment.csv'
+if not os.path.exists(filename):
+    response = requests.get(url)
+    with open(filename, 'wb') as file:
+        file.write(response.content)
+
+drug = pd.read_csv(filename)
+print(drug.apply([np.mean, np.std]).to_markdown() + f"\n| N    | {len(drug)}     |\n")
+```
+
+- `hospital` $\in \{0,1\}$
+- `treatment` $\in \{0,1\}$
+- `severity` prior to treatment assignment
+- `days` in hospital
+
+::: {.aside}
+From chapter 7 of @facure2022
+:::
+
+## Drug Trial at Two Hospitals
+
+```{python}
+#| output: asis
+print(drug.groupby('hospital').mean().to_markdown())
+```
+
+- Treatment randomly assigned within each hospital, but with very different $P(T=1|\text{hospital})$
+
+
+## Drug Trial at Two Hospitals
+
+```{python}
+#| code-fold : true
+models = [
+    smf.ols("days ~ treatment", data=drug).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment", data=drug.query("hospital==0")).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment", data=drug.query("hospital==1")).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment + severity ", data=drug).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment + severity + hospital", data=drug).fit(cov_type='HC0'),
+    ]
+summary_col(models, model_names=['all','hosp 0', 'hosp 1', 'all', 'all'])
+```
+
+## Drug Trial at Two Hospitals
+
+- Bivariate regression with all observations on treatment has wrong sign
+  - Hospital 1 has higher severity which increases days, but also higher P(treatment)
+  - Ignoring interaction of severity and days leads to sign reversal
+- Comparing "all II" and "all III", more controls does not always decrease SE
+
+## Drug Trial at Two Hospitals
+
+```{python}
+drug['severity_c'] = drug['severity'] - drug['severity'].mean()
+drug['hospital_c'] = drug['hospital'] - drug['hospital'].mean()
+drug['hs_c'] = drug['severity']*drug['hospital'] - np.mean(drug['severity']*drug['hospital'])
+models = [
+    smf.ols("days ~ treatment*severity_c", data=drug).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment*hospital_c", data=drug).fit(cov_type='HC0'),
+    smf.ols("days ~ treatment*(hospital_c + severity_c + hs_c)", data=drug).fit(cov_type='HC0')
+]
+summary_col(models)
+```
+
+## Drug Trial at Two Hospitals
+
+- What is the best estimator here?
+  - We will explore more in [matching](matching.qmd)
+
+
+## Sources and Futher Reading
+
+- Chapters [5](https://matheusfacure.github.io/python-causality-handbook/05-The-Unreasonable-Effectiveness-of-Linear-Regression.html), [6](https://matheusfacure.github.io/python-causality-handbook/06-Grouped-and-Dummy-Regression.html) , and [7](https://matheusfacure.github.io/python-causality-handbook/07-Beyond-Confounders.html#bad-controls-selection-bias) of @facure2022
+
+- @causalml2024 chapters 1 and 2
+
+- [The Effect: Chapter 13 - Regression](https://www.theeffectbook.net/ch-StatisticalAdjustment.html) @hk2021
+
+
+## References
