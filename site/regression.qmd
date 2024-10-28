@@ -170,7 +170,7 @@ $$
   - $\frac{\partial}{\partial x_1}\Er[y|x] \approx \beta_{0,1}$ is the change in $x_1$ holding the rest of $x$ constant
 
 
-## Example: Gender Earnings Gap
+## Example: Gender Earnings Gap {.smaller}
 
 ```{python}
 #| output-location : slide
@@ -204,7 +204,7 @@ lm.append(smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours + wasmar
 lm.append(smf.ols(formula="log_earn ~ female*(wasmarried+married) + log_hourslw + log_uhours", data=cps,
                   missing="drop").fit(cov_type='HC3'))
 
-summary_col(lm, stars=True)
+summary_col(lm, stars=True, model_names=[f"{i+1}" for i in range(len(lm))])
 ```
 
 ## Partialling Out
@@ -307,15 +307,15 @@ summary_col([m1, madd, minteract],model_names=['simple','additive','interactive'
 $$
 \begin{align*}
 Y & = \beta_0^s + \beta_1^s T + \epsilon^s \\
-Y & = \beta_0^a + \beta_1^a T + X'\gamma^a_0 + \epsilon^s \\
-Y & = \beta_0^i + \beta_1^i T + X'\gamma^i_0 + TX'\gamma^i_1\epsilon^s
+Y & = \beta_0^a + \beta_1^a T + X'\gamma^a_0 + \epsilon^a \\
+Y & = \beta_0^i + \beta_1^i T + X'\gamma^i_0 + TX'\gamma^i_1 + \epsilon^s
 \end{align*}
 $$
 - All are consistent
 $$
 \plim \hat{\beta}_1^s = \plim \hat{\beta}_1^a = \plim \hat{\beta}_1^i = ATE
 $$
-- Interactive has smaller variance
+- Interactive has smaller asymptotic variance
 $$
 \var(\hat{\beta}_1^i) \leq \var(\hat{\beta}_1^s) \text{ and } \var(\hat{\beta}_1^i) \leq \var(\hat{\beta}_1^a)
 $$
@@ -352,7 +352,7 @@ data = pd.read_csv(filename)
 data.describe()
 ```
 
-## Collections and Payment Reminders
+## Collections and Payment Reminders {.smaller}
 
 ```{python}
 #| code-fold : true
@@ -360,7 +360,7 @@ lm = list()
 lm.append(smf.ols(formula="payments ~ email", data=data).fit(cov_type='HC3'))
 lm.append(smf.ols(formula="payments ~ email + credit_limit + risk_score",data=data).fit(cov_type='HC3'))
 lm.append(smf.ols(formula="payments ~ email + credit_limit + risk_score + opened + agreement",data=data).fit(cov_type='HC3'))
-summary_col(lm, stars=True)
+summary_col(lm, stars=True, model_names=[f"{i+1}" for i in range(len(lm))])
 ```
 
 ## Collections and Payment Reminders
@@ -414,7 +414,7 @@ print(drug.groupby('hospital').mean().to_markdown())
 - Treatment randomly assigned within each hospital, but with very different $P(T=1|\text{hospital})$
 
 
-## Drug Trial at Two Hospitals
+## Drug Trial at Two Hospitals {.smaller}
 
 ```{python}
 #| code-fold : true
@@ -435,9 +435,10 @@ summary_col(models, model_names=['all','hosp 0', 'hosp 1', 'all', 'all'])
   - Ignoring interaction of severity and days leads to sign reversal
 - Comparing "all II" and "all III", more controls does not always decrease SE
 
-## Drug Trial at Two Hospitals
+## Drug Trial at Two Hospitals {.smaller}
 
 ```{python}
+#| output-location : slide
 drug['severity_c'] = drug['severity'] - drug['severity'].mean()
 drug['hospital_c'] = drug['hospital'] - drug['hospital'].mean()
 drug['hs_c'] = drug['severity']*drug['hospital'] - np.mean(drug['severity']*drug['hospital'])
@@ -446,7 +447,7 @@ models = [
     smf.ols("days ~ treatment*hospital_c", data=drug).fit(cov_type='HC0'),
     smf.ols("days ~ treatment*(hospital_c + severity_c + hs_c)", data=drug).fit(cov_type='HC0')
 ]
-summary_col(models)
+summary_col(models, model_names=['I','II','III'])
 ```
 
 ## Drug Trial at Two Hospitals

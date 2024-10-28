@@ -309,6 +309,8 @@ $$
 ## Simulated Illustration of Berry-Esseen CLT
 
 ```{python}
+#| output-location: slide
+import seaborn as sns
 def dgp(n, xhi=2):
     p = 1/(1+xhi**2)
     xlo = -p*xhi/(1-p)
@@ -337,10 +339,12 @@ def plotcdfwithbounds(dgp,  e3, n=[10,100,1000], S=9999):
         plt.fill_between(x, cdfx - 0.5*e3/np.sqrt(n[i]), cdfx + 0.5*e3/np.sqrt(n[i]), alpha=0.2, color=cmap[i])
     plt.legend()
     plt.xlim(-2.5,2.5)
-    plt.show()
+    plt.ylim(0,1)
     plt.title("Distribution of Scaled Sample Mean")
+    return(plt.gcf())
 
-plotcdfwithbounds(dgp, e3)
+fig=plotcdfwithbounds(dgp, e3)
+fig.show()
 ```
 
 ::: {.notes}
@@ -474,8 +478,7 @@ plt.show()
 
 ```{python}
 #| output-location: slide
-import seaborn as sns
-
+np.random.seed(6987)
 def dgp(n):
     x = np.exp(abs(np.random.normal(0,1,n)))
     return x
@@ -508,6 +511,7 @@ for b in range(3):
 
 sd=np.std(estsims)
 plt.xlim(-2.5*sd,2.5*sd)
+plt.ylim(0,1)
 plt.legend()
 plt.title(f"True CDF and Approximate CDFs for three data realizations with n={n}")
 plt.show()
@@ -532,6 +536,8 @@ plt.show()
 ## Bootstrap for Pivotal Statistic
 
 ```{python}
+#| output-location : slide
+np.random.seed(6987)
 def estimator(data) :
     return np.mean(data), np.std(data)/np.sqrt(len(data))
 
@@ -562,6 +568,7 @@ cdfx= scipy.stats.norm().cdf(x)
 plt.plot(x, cdfx, label="Normal", color="black", linestyle="dashed")
 
 sd=np.std(estsims)
+plt.ylim(0,1)
 plt.xlim(-2.5*sd,2.5*sd)
 plt.legend()
 plt.title(f"True CDF and Approximate CDFs for t-stat for three data realizations with n={n}")
