@@ -211,13 +211,21 @@ summary_col(lm, stars=True, model_names=[f"{i+1}" for i in range(len(lm))])
 
 $$y_i = x_i \beta + w_i'\gamma + u_i$$
 - Can equivalently calculate $\beta$ by
-  - Multiple regression of $y$ on $x$ and $w$, or
+
+::: {.columms}
+
+::: {.column width=50%}
+
+- Multiple regression of $y$ on $x$ and $w$, or
 
 ```{python}
 smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps, missing="drop").fit(cov_type="HC3").params[1]
 ```
+:::
 
-  - Bivariate regression of residuals from regressing $y$ on $w$, on the residuals from regression $x$ on $w$
+::: {.column width=50%}
+
+- Bivariate regression of residuals from regressing $y$ on $w$, on the residuals from regression $x$ on $w$
 
 ```{python}
 ey=smf.ols(formula="log_earn ~ log_hourslw + log_uhours", data=cps, missing="drop").fit().resid
@@ -227,7 +235,11 @@ edf.columns=['ex','ey']
 smf.ols('ey ~ ex', data=edf).fit(cov_type="HC3").params[1]
 ```
 
-## Omitted Variables
+:::
+
+:::
+
+## Omitted Variables {.smaller}
 
 - If we want
 $$
@@ -247,7 +259,7 @@ $$
   - Speculating about direction of bias when we some variables are unobserved
 
 
-## More Conditioning
+## Gender Wage Gap with More Conditioning
 
 ```{python}
 import pyfixest as pf
@@ -279,10 +291,10 @@ D = np.random.binomial(1, .2, size=n)    # treatment indicator; only 20% get tre
 Y = Y1 * D + Y0 * (1 - D)  # observed Y
 Z = Z - Z.mean()       # demean Z
 data = pd.DataFrame({"Y": Y, "D": D, "Z": Z})
-print(f"Sample ATE = {np.mean(Y1-Y0):.3}")
+print(f"Unobservable sample ATE = {np.mean(Y1-Y0):.3}")
 ```
 
-- Populatoin ATE is $0$
+- Population ATE is $0$
 
 ## Simulated RCT
 

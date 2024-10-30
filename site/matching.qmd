@@ -257,15 +257,13 @@ import doubleml as dml
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.kernel_approximation import RBFSampler
 
-
-
-g = GradientBoostingRegressor()
-m = GradientBoostingClassifier()
-#Xpoly = PolynomialFeatures(degree=2, include_bias=False).fit_transform(X)
-#scaler = StandardScaler().fit(Xpoly)
-#Xpoly = scaler.transform(Xpoly)
-dmldata = dml.DoubleMLData.from_arrays(X, y, T)
+rbf_feature = RBFSampler(gamma=0.2, random_state=1, n_components=100)
+X_features = rbf_feature.fit_transform(X)
+g = LassoCV(max_iter=10_000, n_jobs=-1, alphas=10**np.linspace(-2,5,50))
+m = LogisticRegressionCV()
+dmldata = dml.DoubleMLData.from_arrays(X_features, y, T)
 dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
 dmlATE.fit()
 dmlATE.summary
