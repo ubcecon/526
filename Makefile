@@ -33,7 +33,7 @@ $(OUTDIR)/%.html: $(SRCDIR)/%.qmd $(SRCDIR)/_quarto.yml $(SRCDIR)/styles.css
 	source $(SRCDIR)/.venv/bin/activate; quarto render $<
 
 deploy: all
-	cd $(OUTDIR); git add *; git commit -a -m "Automated updates to slides."; git push origin main
+	cd $(OUTDIR); git add *; git commit -a -m "Automated updates to slides."; git push origin main_2024
 	git commit -a -m "Automated updates to slides."; git push origin main
 
 data: site/data/learning_mindset.csv \
