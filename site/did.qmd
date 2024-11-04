@@ -169,7 +169,7 @@ plt.legend();
 ## Estimation via Regression
 
 ```{python}
-smf.ols('deposits ~ poa*jul', data=data).fit().summary().tables[1]
+smf.ols('deposits ~ poa*jul', data=data).fit(cov_type="HC3").summary()
 ```
 
 ## Further Topics

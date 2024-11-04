@@ -92,6 +92,7 @@ where $\pi = \argmin_{\tilde{\pi}} \Er[(T_i - X_i'\tilde{\pi})^2]$
 import numpy as np
 from matplotlib import style
 from matplotlib import pyplot as plt
+import scipy
 style.use("fivethirtyeight")
 ```
 
@@ -101,13 +102,16 @@ np.random.seed(1234)
 def simulate(n, pi=np.array([0,1])):
     X = np.random.randn(n, len(pi))
     X[:,0] = 1
-    T = 1*((X @ pi + np.random.randn(n))>0)
-    y0 = np.random.randn(n)
-    y1 = np.exp(3*(X[:,1]-2)) + np.random.randn(n)
+    P = np.clip(scipy.stats.norm.cdf(X @ pi), 0.05, 0.95)
+    T = 1*(np.random.rand(n) < P)
+    Ey0x = np.zeros(n)
+    Ey1x = np.exp(3*(X[:,1]-2))
+    y0 = Ey0x + np.random.randn(n)
+    y1 = Ey1x + np.random.randn(n)
     y = T*y1 + (1-T)*y0
-    return(X,T,y,y0,y1)
+    return(X,T,y,y0,y1, Ey0x, Ey1x, P)
 
-X,T,y,y0,y1 = simulate(1000)
+X,T,y,y0,y1,Ey0x,Ey1x,P = simulate(4000)
 
 pihat = np.linalg.solve(X.T @ X, X.T @ T)
 w = T - X @ pihat
@@ -147,7 +151,8 @@ axes[1].scatter(X[:,1], y1-y0, label="TE")
 axes[1].set_xlabel("X")
 axes[1].set_ylabel("Y₁ - Y₀")
 axes[1].set_title("Treatment effects")
-
+sort_idx = np.argsort(X[:,1])
+axes[1].plot(X[sort_idx,1], Ey1x[sort_idx]-Ey0x[sort_idx], label="E[y1-y0|x]")
 
 # Display the plot
 plt.tight_layout()  # Ensure proper layout spacing
@@ -208,6 +213,7 @@ where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
 
 ## Doubly Robust Estimator
 
+- Combines plug-in and IPW estimators
 - Estimator
 $$
 \begin{align*}
@@ -223,7 +229,7 @@ $$
   - Consistent as long as either $\hat{p}(X) \inprob p(X)$ or $\hat{E}[Y|T,X] \inprob \Er[Y|T,X]$
   - Insensitive to small changes in $\hat{p}(X)$ or $\hat{E}[Y|T,X]$
 
-- Allows: nicer statistical properties
+- Allows nicer statistical properties
   - Weaker assumptions needed
   - Asymptotic distribution is the same as if $p(X)$ and $\Er[Y|T,X]$ were known
 
@@ -233,12 +239,12 @@ $$
 - Recommended package:
     - [doubleml](https://docs.doubleml.org/stable/guide/models.html#interactive-regression-models-irm)
 
-## Software
+<!-- ## Software -->
 
-- Other packages:
-    - [causalinference](https://github.com/laurencium/Causalinference) has a double robust estimator, but it estimates $\hat{E}[Y|T,X]$ via linear regression and $\hat{p}(X)$ via logit (maybe probit, not sure)
-        - can make nonparametric by adding e.g. powers of $x$ to $X$, but need to manage manually
-    - [zEpid](https://zepid.readthedocs.io/en/stable/Reference/generated/zepid.causal.doublyrobust.AIPW.AIPTW.html#zepid.causal.doublyrobust.AIPW.AIPTW) is similiar to causalinference, but has a formula interface, so slightly easier to make model more flexible
+<!-- - Other packages: -->
+<!--     - [causalinference](https://github.com/laurencium/Causalinference) has a double robust estimator, but it estimates $\hat{E}[Y|T,X]$ via linear regression and $\hat{p}(X)$ via logit (maybe probit, not sure) -->
+<!--         - can make nonparametric by adding e.g. powers of $x$ to $X$, but need to manage manually -->
+<!--     - [zEpid](https://zepid.readthedocs.io/en/stable/Reference/generated/zepid.causal.doublyrobust.AIPW.AIPTW.html#zepid.causal.doublyrobust.AIPW.AIPTW) is similiar to causalinference, but has a formula interface, so slightly easier to make model more flexible -->
 
 ## Example: simulation
 
@@ -247,23 +253,130 @@ $$
 ```{python}
 se = np.sqrt(np.var(y1-y0)/len(y1))
 ate = np.mean(y1-y0)
-print(ate-1.96*se, ate, ate+1.96*se)
+print(f"Infeasible estimator with potential outcomes observed = {ate:.2} with 95% CI = [{ate-1.96*se:.2},{ate+1.96*se:.2}]\n")
 ```
 
-## Example: simulation
+- Infeasible estimator: doubly robust with true $\Er[Y(T)|X]$ and $p(X)$
 
 ```{python}
-import doubleml as dml
+aipw = Ey1x - Ey0x + T*(y - Ey1x)/P - (1-T)*(y - Ey0x)/(1-P)
+se = np.sqrt(np.var(aipw)/len(aipw))
+print(f"Infeasible estimator with true E[y1-y0|x] = and p(x) {np.mean(aipw):.2} with 95% CI = [{np.mean(aipw)-1.96*se:.2},{np.mean(aipw)+1.96*se:.2}]\n")
+```
+## Example: choosing flexible estimators
+
+```{python}
+#| output-location: column
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.kernel_approximation import RBFSampler
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
 
-rbf_feature = RBFSampler(gamma=0.2, random_state=1, n_components=100)
-X_features = rbf_feature.fit_transform(X)
-g = LassoCV(max_iter=10_000, n_jobs=-1, alphas=10**np.linspace(-2,5,50))
-m = LogisticRegressionCV()
-dmldata = dml.DoubleMLData.from_arrays(X_features, y, T)
+gamma = 0.5
+nc = 100
+models = [
+    Pipeline([('rbf',RBFSampler(gamma=gamma, random_state=1, n_components=nc)),
+              ('lasso',LassoCV(max_iter=10_000, tol=1e-2, n_jobs=-1, selection='random',
+                               alphas=10**np.linspace(-3,3,20)))]),
+    Pipeline([('poly',PolynomialFeatures(degree=10)),
+              ('scale', StandardScaler()),
+              ('lasso',LassoCV(max_iter=10_000, n_jobs=-1, selection='random', tol=1e-2,
+                               alphas=10**np.linspace(-3,3,20)))]),
+    GradientBoostingRegressor(learning_rate=0.1, criterion="squared_error")]
+
+for m in models :
+    print(m)
+    print(f"cross val R-squared {cross_val_score(m, X, y, cv=5).mean():.4} \n\n")
+
+```
+
+## Visualizing Fit
+
+```{python}
+#| output-location: slide
+from sklearn.model_selection import train_test_split
+names = ["lasso-rbf", "lasso-poly", "gbforest"]
+X_train,  X_test,y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=5498)
+fig, ax = plt.subplots(1,3, figsize=(12,5))
+ax = ax.flatten()
+def r2(y,yhat) :
+    return(1 - np.mean((y-yhat)**2)/np.var(y))
+otr = np.argsort(X_train[:,1])
+ote = np.argsort(X_test[:,1])
+
+for i, m in enumerate(models):
+    m.fit(X_train,y=y_train)
+    yhat = m.predict(X_train)
+    yhat_test = m.predict(X_test)
+    ax[i].scatter(X_train[:,1], y_train, alpha=0.3, label="Train y", color="C0", marker=".")
+    ax[i].plot(X_train[otr,1], yhat[otr], alpha=0.5, label="Train yhat", color="C0")
+    ax[i].scatter(X_test[:,1], y_test, alpha=0.3, label="Test y", color="C1", marker=".")
+    ax[i].plot(X_test[ote,1], yhat_test[ote], alpha=0.5, label="Test yhat", color="C1")
+    ax[i].set_xlabel("x")
+    ax[i].set_ylabel("y")
+    ax[i].set_title(names[i])
+    ax[i].annotate(f"Train R-squared = {r2(y_train, yhat):.2}", (0.05, 0.95), xycoords='axes fraction')
+    ax[i].annotate(f"Test R-squared = {r2(y_test, yhat_test):.2}", (0.05, 0.90), xycoords='axes fraction')
+    ax[i].legend()
+
+plt.show()
+```
+
+## Example: choosing flexible estimators
+
+
+```{python}
+#| output-location: column
+gamma = 0.5
+nc = 100
+models = [
+    Pipeline([('rbf',RBFSampler(gamma=gamma, random_state=1, n_components=nc)),
+              ('logistic',LogisticRegressionCV(n_jobs=-1, scoring='neg_log_loss'))]),
+    Pipeline([('poly',PolynomialFeatures(degree=10)),
+              ('scale', StandardScaler()),
+              ('logistic',LogisticRegressionCV(n_jobs=-1, scoring='neg_log_loss'))]),
+    GradientBoostingClassifier(learning_rate=0.1)]
+for m in models :
+    print(m)
+    print(f"cross val log likelihood {cross_val_score(m, X, T, scoring='neg_log_loss', cv=5).mean():.4} \n\n")
+
+```
+
+## Example: Checking Overlap
+
+```{python}
+#| output-location : slide
+import seaborn as sns
+import matplotlib.pyplot as plt
+import doubleml as dml
+g = Pipeline([('poly',PolynomialFeatures(degree=10)),
+              ('scale', StandardScaler()),
+              ('lasso',LassoCV(max_iter=10_000, n_jobs=-1, selection='random', tol=1e-2,
+                               alphas=10**np.linspace(-3,3,20)))])
+m = Pipeline([('rbf',RBFSampler(gamma=gamma, random_state=1, n_components=nc)),
+              ('logistic',LogisticRegressionCV(n_jobs=-1, scoring='neg_log_loss'))])
+
+m.fit(X,T)
+
+def plotp(model,X,d):
+    fig,ax=plt.subplots()
+    p = model.predict_proba(X)
+    sns.histplot(p[d==0,1], kde = False,
+                 label = "Untreated", ax=ax)
+    sns.histplot(p[d==1,1], kde = False,
+                 label = "Treated", ax=ax)
+    ax.set_title('P(T|x)')
+    return(fig)
+
+fig=plotp(m, X, T)
+```
+
+## Example: Results
+
+```{python}
+dmldata = dml.DoubleMLData.from_arrays(X, y, T)
 dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
 dmlATE.fit()
 dmlATE.summary
@@ -271,6 +384,12 @@ dmlATE.summary
 
 ```{python}
 dmlATE.causal_contrast(0).summary
+```
+
+```{python}
+aipw = Ey1x - Ey0x + T*(y - Ey1x)/P - (1-T)*(y - Ey0x)/(1-P)
+se = np.sqrt(np.var(aipw)/len(aipw))
+print(f"Infeasible estimator with true E[y1-y0|x] = and p(x) {np.mean(aipw):.2} with 95% CI = [{np.mean(aipw)-1.96*se:.2},{np.mean(aipw)+1.96*se:.2}]\n")
 ```
 
 
@@ -292,7 +411,6 @@ from matplotlib import style
 from matplotlib import pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
-from causalinference import CausalModel
 style.use("fivethirtyeight")
 pd.set_option("display.max_columns", 20)
 datadir="./data"
@@ -323,7 +441,7 @@ plt.show()
 ## Unadjusted estimate of ATE
 
 ```{python}
-print(smf.ols("achievement_score ~ intervention", data=data).fit().summary().tables[1])
+print(smf.ols("achievement_score ~ intervention", data=data).fit(cov_type="HC3").summary().tables[1])
 ```
 
 ```{python}
@@ -349,7 +467,7 @@ plt.show();
 ## Regression estimate of ATE
 
 ```{python}
-ols = smf.ols("achievement_score ~ intervention + success_expect + ethnicity + gender + frst_in_family + school_urbanicity + school_mindset + school_achievement + school_ethnic_minority + school_poverty + school_size",data=data).fit()
+ols = smf.ols("achievement_score ~ intervention + success_expect + ethnicity + gender + frst_in_family + school_urbanicity + school_mindset + school_achievement + school_ethnic_minority + school_poverty + school_size",data=data).fit(cov_type="cluster", cov_kwds={'groups': data['schoolid']})
 print(ols.summary().tables[1])
 ```
 
@@ -398,7 +516,7 @@ from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.neighbors import KNeighborsRegressor
 import sklearn
 
-def propensitymatching(T,Y,X,psmodel=LogisticRegressionCV(),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
+def propensitymatching(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ey1 = neighbormodel.fit(ps[T==1].reshape(-1,1),Y[T==1])
@@ -430,7 +548,7 @@ plt.show()
 ## Inverse Propensity Weighting
 
 ```{python}
-def ipw(T,Y,X,psmodel=LogisticRegressionCV()):
+def ipw(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss')):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ate=np.mean(Y*(T - ps)/(ps*(1-ps)))
@@ -447,7 +565,7 @@ from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifi
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
 from sklearn.preprocessing import PolynomialFeatures
 
-def robustate(T,Y,X,psmodel=LogisticRegressionCV(),ymodel=LassoCV(), cluster=None):
+def robustate(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),ymodel=LassoCV(), cluster=None):
     pfit = psmodel.fit(X,T)
     ps = pfit.predict_proba(X)[:,1]
     ey1fit = ymodel.fit(X[T==1],Y[T==1])
@@ -479,7 +597,7 @@ print(ate-1.96*se, ate, ate+1.96*se)
 import doubleml as dml
 
 m = LassoCV()
-g = LogisticRegressionCV()
+g = LogisticRegressionCV(scoring='neg_log_loss')
 dmldata = dml.DoubleMLData(data_with_categ, Y,T,X.to_list())
 dmlATE = dml.DoubleMLAPOS(dmldata, m, g, treatment_levels=[0, 1])
 dmlATE.fit()

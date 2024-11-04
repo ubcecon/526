@@ -53,6 +53,7 @@ $$
 
 ## Identification
 
+
 - Same logic as before,
 $$
 \begin{align*}
@@ -114,7 +115,7 @@ style.use("fivethirtyeight")
 ## Weights
 
 ```{python}
-#| code-fold: true
+#| output-location: column
 def assigntreat(n, T, portiontreated):
     treated = np.zeros((n, T), dtype=bool)
     for t in range(1, T):
@@ -138,11 +139,11 @@ weighted_sum = np.sum(y * weights(D))
 print(weighted_sum)
 ```
 
-```{python}
-#| code-fold: true
+## Using a package
 
+```{python}
 # check that it matches fixed effect estimate from a package
-from linearmodels.panel import PanelOLS
+import pyfixest as pf
 
 df = pd.DataFrame({
     'id': np.repeat(np.arange(1, n + 1), T),
@@ -150,10 +151,8 @@ df = pd.DataFrame({
     'y': y.flatten(),
     'D': D.flatten()
 })
-df.set_index(['id', 't'], inplace=True)
-model = PanelOLS(df['y'], df[['D']], entity_effects=True, time_effects=True)
-result = model.fit()
-print(result)
+result=pf.feols('y ~ D | id + t', df, vcov={"CRV1": "id"})
+result.summary()
 ```
 
 ## Weights with Single Treatment Time
@@ -220,13 +219,11 @@ def simulate(n,T,pt,ATT,sigma=0.01):
         'y': y.flatten(),
         'D': D.flatten()
     })
-    df.set_index(['id', 't'], inplace=True)
     return(df)
 
 df = simulate(n,T,pt,ATT)
-model = PanelOLS(df['y'], df[['D']], entity_effects=True, time_effects=True)
-result = model.fit()
-print(result)
+result = pf.feols('y ~ D | id + t',  df, vcov={"CRV1": "id"})
+result.summary()
 ```
 
 ## When to worry
@@ -295,27 +292,29 @@ for all $t, s, c, c'$
 #| code-fold: true
 def definecohort(df):
     # convert dummies into categorical
-    n = len(df.index.levels[0])
-    T = len(df.index.levels[1])
+    n = len(df.id.unique())
+    T = len(df.t.unique())
+    df = df.set_index(['id','t'])
     dmat=np.array(df.sort_index().D)
     dmat=np.array(df.D).reshape(n,T)
     cohort=dmat.dot(1 << np.arange(dmat.shape[-1] - 1, -1, -1))
     cdf = pd.DataFrame({"id":np.array(df.index.levels[0]), "cohort":pd.Categorical(cohort)})
-    cdf.set_index(['id'],inplace=True)
+    cdf =cdf.set_index('id')
+    df = df.reset_index().set_index('id')
     df=pd.merge(df, cdf, left_index=True, right_index=True)
+    df=df.reset_index()
     return(df)
 
 df = definecohort(df)
 
 def defineinteractions(df):
-    df = df.reset_index()
     df['dct'] = 'untreated'
     df['dct'] = df.apply(lambda x: f"t{x['t']},c{x['cohort']}" if x['D'] else f"untreated", axis=1)
-    return(df.set_index(['id','t']))
+    return(df)
 
 df = defineinteractions(df)
 
-PanelOLS.from_formula("y ~ -1 + dct + EntityEffects + TimeEffects", df).fit()
+pf.feols("y ~  dct | id + t", df, vcov={"CRV1": "id"}).summary()
 ```
 
 ## Regression with Cohort-Time Interactions
@@ -336,10 +335,7 @@ $$
 
 ## Regression with Cohort-Time Interactions
 ```{python}
-dfi=df.reset_index()
-dfi['time'] = dfi['t']
-dfi=dfi.set_index(['id','t'])
-PanelOLS.from_formula("y ~ -1 + C(cohort)*C(time) + EntityEffects",dfi, drop_absorbed=True).fit()
+pf.feols("y ~ -1 + C(cohort)*C(t) | id + t",df, vcov={"CRV1":"id"}).summary()
 ```
 
 # Pre-Trends
@@ -404,13 +400,14 @@ for some chosen $M$
 - Linear covariates could lead to same problem as with matching
 
 - Doubly robust estimator @sz2020
-  - [doubleml](https://docs.doubleml.org/stable/examples/py_double_ml_did.html) package implements it
+  - [doubleml](https://docs.doubleml.org/stable/examples/py_double_ml_did.html) package partially implements it
 
 
 ## Sources and Further Reading
 
 - @facure2022 [chapter 1]
 - @hk2021 [chapter 16]
+- Book: @dd2023
 - Recent reviews: @roth2023, @dd2022, @arkhangelsky2023
 - Early work pointing to problems with fixed effects:
   - @laporte2005, @wooldridge2005

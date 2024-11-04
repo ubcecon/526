@@ -20,8 +20,6 @@ bibliography: 526.bib
    - [Chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
    - Chapters 5 and 10 of @causalml2024
 
-9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
-
 5. [Introduction to difference in differences](did.qmd), [notebook](did.ipynb)
    - Reading: [chapter 13](https://matheusfacure.github.io/python-causality-handbook/13-Difference-in-Differences.html) of @facure2022
 
@@ -33,6 +31,8 @@ bibliography: 526.bib
 
 8. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
+
+9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
 
 10. [Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
    - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)

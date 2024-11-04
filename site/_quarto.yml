@@ -9,9 +9,9 @@ website:
   navbar:
     left:
       - href: index.qmd
-        text: Contents
+        text: Content
       - href: https://github.com/ubcecon/econ526
-        text: Schedule
+        text: Github
       - text: Slides from Jesse and Phil
         href: https://ubcecon.github.io/ECON526/lectures/index.html
       - href: feed.qmd
