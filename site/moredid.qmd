@@ -102,9 +102,6 @@ $$
 ```{python}
 #| code-fold: true
 #| code-summary: "imports"
-import warnings
-warnings.filterwarnings('ignore')
-
 import pandas as pd
 import numpy as np
 from matplotlib import style
@@ -209,8 +206,9 @@ dvals.sort()
 ATT = np.ones(T)
 ATT[0] = 0.0
 ATT[T-2:T] = 6.0
+np.random.seed(6798)
 
-def simulate(n,T,pt,ATT,sigma=0.01):
+def simulate(n,T,pt,ATT,sigma=1.0):
     D = assigntreat(n,T,pt)
     y = np.random.randn(n,T)*sigma + ATT[np.cumsum(D, axis=1)]
     df = pd.DataFrame({
@@ -257,13 +255,21 @@ $$
 
 ## What to Do?
 
-- Use an appropriate package
+- Option 1: Use an appropriate package
    - [differences](https://github.com/bernardodionisi/differences)
+   - [pyfixest](https://pypi.org/project/pyfixest/) (Gardner's 2-stage estimator or Dube et al (2023) local projections)
+   - doubleml (see chapter 16 of @causalml2024)
    - see https://asjadnaqvi.github.io/DiD/ for more options (but none are python)
 
+
+## What to Do?
+
+- Option 2: estimate a correctly specified fixed effects regression (my preferred approach)
+
 - Problem is possible correlation of $(y_{it}(1) - y_{it}(0))D_{it}$ with $\tilde{D}_{it}$
-   - $\tilde{D}_{it}$ is function of $t$ and $(D_{i1}, ..., D_{iT})$
-   - Estimating separate coefficient for each combination of $t$ and $(D_{i1}, ..., D_{iT})$ will eliminate correlation / flexibly model treatment effect heterogeneity
+
+- $\tilde{D}_{it}$ is function of $t$ and $(D_{i1}, ..., D_{iT})$
+- Estimating separate coefficient for each combination of $t$ and $(D_{i1}, ..., D_{iT})$ will eliminate correlation / flexibly model treatment effect heterogeneity
 
 ## What to Do?
 
@@ -280,16 +286,16 @@ $$
 y_{it} = \sum_{c=1}^C D_{it} 1\{C_i=c\} \beta_{ct} + \alpha_i + \delta_t + \epsilon_{it}
 $$
 
-- $\hat{\beta}_{ct}$ consistently estimates $\Er[y_{it}(1) - y_{it}(0) | C_{i}=c, D_{it}=1]$ is parallel trends holds for all periods
+- $\hat{\beta}_{ct}$ consistently estimates $\Er[y_{it}(1) - y_{it}(0) | C_{i}=c, D_{it}=1]$ assuming parallel trends holds for all periods
 $$
 \Er[y_{it}(0) - y_{it-s}(0) | C_i=c] = \Er[y_{it}(0) - y_{it-s}(0) | C_i=c']
 $$
 for all $t, s, c, c'$
 
-## Regression with Cohort-Treat-Time Interactions
+## Regression with Cohort Interactions
 
 ```{python}
-#| code-fold: true
+#| output-location : slide
 def definecohort(df):
     # convert dummies into categorical
     n = len(df.id.unique())
@@ -305,21 +311,64 @@ def definecohort(df):
     df=df.reset_index()
     return(df)
 
-df = definecohort(df)
+dfc = definecohort(df)
 
 def defineinteractions(df):
     df['dct'] = 'untreated'
     df['dct'] = df.apply(lambda x: f"t{x['t']},c{x['cohort']}" if x['D'] else f"untreated", axis=1)
     return(df)
 
-df = defineinteractions(df)
+dfc = defineinteractions(dfc)
 
-pf.feols("y ~  dct | id + t", df, vcov={"CRV1": "id"}).summary()
+modc = pf.feols("y ~  C(dct, Treatment('untreated')) | id + t", dfc, vcov={"CRV1": "id"})
+pf.etable([modc], type="md")
+```
+
+## Regression with Cohort Interactions
+```{python}
+#| output-location : slide
+import re
+def plotcohortatt(modc):
+    coef = modc.coef()
+    ci = modc.confint()
+    tcregex = re.compile(r".+t(\d+),c(\d+)]")
+    catt = pd.DataFrame(index=coef.index, columns=['t','c','att','yerr'])
+    for i in range(len(coef)):
+        m = tcregex.match(coef.index[i])
+        t,c = m.groups()
+        t=int(t)
+        c=int(c)
+        catt.loc[coef.index[i]] = [t,c,coef.iloc[i],np.abs(ci.iloc[i][0]-coef.iloc[i])]
+
+    catt.sort_values(['c','t'],inplace=True)
+    fig, ax = plt.subplots()
+    ax.set(xlabel='time', ylabel='ATT | cohort')
+    for g in catt.groupby('c') :
+        c = g[0]
+        g = g[1]
+        ax.errorbar(g['t'], g['att'], yerr=g['yerr'], fmt='o', label=f'cohort {c}')
+
+    ax.legend()
+    return(fig)
+
+fig=plotcohortatt(modc)
 ```
 
 ## Regression with Cohort-Time Interactions
 
-- If just want to assume parallel trends at treatment times, instead of parallel trends everywhere, can estimate
+- If just want to assume parallel trends for treated and never treated, i.e.
+$$
+\Er[y_{it}(0) - y_{it-s}(0) | C_i=c] = \Er[y_{it}(0) - y_{it-s}(0) | C_i=c']
+$$
+when $c$ treated at $t$, untreated at $t-s$ and $c'$ never treated
+
+- Estimate
+$$
+y_{it} = \sum_{c=1}^C 1\{C_i=c\} \delta_{c,t} + \alpha_i + \epsilon_{it}
+$$
+
+## Regression with Cohort-Time Interactions
+
 $$
 y_{it} = \sum_{c=1}^C 1\{C_i=c\} \delta_{c,t} + \alpha_i + \epsilon_{it}
 $$
@@ -330,12 +379,13 @@ $$
 $\Er[y_{it} - y_{i,t-s}| C_{i} = c]$
 - If $c$ treated at $t$, not at $t-s$, and $c'$ not treated at either and assume parallel trends,
 $$
-\hat{\delta}_{c,t} -\hat{\delta}_{c,t-s} - (\hat{\delta}_{c',t} -\hat{\delta}_{c',t-s}) \inprob \Er[y_{it}(1)-y{it}(0)| C_i =c]
+\hat{\delta}_{c,t} - \hat{\delta}_{c,t-s} - (\hat{\delta}_{c',t} -\hat{\delta}_{c',t-s}) \inprob \Er[y_{it}(1)-y{it}(0)| C_i =c]
 $$
 
 ## Regression with Cohort-Time Interactions
 ```{python}
-pf.feols("y ~ -1 + C(cohort)*C(t) | id + t",df, vcov={"CRV1":"id"}).summary()
+modct = pf.feols("y ~ C(cohort)*C(t) | id + t",dfc, vcov={"CRV1":"id"})
+pf.etable(modct, type='md')
 ```
 
 # Pre-Trends
@@ -358,6 +408,64 @@ $$
 $$
 
 - Always at least plot pre-trends
+
+## Pre-trends
+
+```{python}
+#| output-location: slide
+def eventstudyplot(modct) :
+    evdf = pd.DataFrame(index=modct.coef().index, columns=['c', 't','delta','did','se','vindex'])
+    pattern=r".+T\.(\d+).+\[T\.(\d+)\]"
+    for i in range(len(modct.coef())):
+        m = re.match(pattern, modct.coef().index[i])
+        c,t = m.groups()
+        t = int(t)
+        c = int(c)
+        evdf.loc[modct.coef().index[i]] = [c,t,modct.coef().iloc[i],0, 0, i]
+
+    evdf.sort_values(['c','t'],inplace=True)
+    T = evdf['t'].max()
+    V = modct._vcov
+    evdf.reset_index(inplace=True)
+    for t in range(T) :
+        if not (t+1) in evdf.t.unique() :
+            ndf = pd.DataFrame(columns=evdf.columns)
+            ndf.c=evdf.c.unique()
+            ndf.t=t+1
+            ndf.delta=0
+            ndf.vindex=V.shape[0]
+            evdf=pd.concat([evdf,ndf])
+    V = np.vstack([V,np.zeros(V.shape[1])])
+    V = np.hstack([V,np.zeros((V.shape[0],1))])
+
+    def did(g) :
+        c = g.c.unique()[0]
+        timestreated = bin(c).count('1')
+        t0 = T - timestreated
+        g=g.set_index('t')
+        g['did'] = g['delta'] - g['delta'][t0]
+        vi = g['vindex'].to_numpy().astype(int)
+        g['se'] = np.sqrt(V[vi,vi] - 2*V[g['vindex'][t0],vi] + V[g['vindex'][t0],g['vindex'][t0]])
+        return(g)
+
+    evdf=evdf.groupby('c').apply(did).drop(columns='c').reset_index()
+
+    fig, ax = plt.subplots(len(evdf.c.unique()),1)
+    for (i,g) in enumerate(evdf.groupby('c')) :
+        c = g[0]
+        g = g[1]
+        timestreated = bin(c).count('1')
+        t0 = T - timestreated + 1
+        ax[i].axvline(t0, color='black', ls=":")
+        ax[i].errorbar(g['t'], g['did'], yerr=1.96*g['se'], fmt='o', label=f'cohort {c}')
+        ax[i].set_title(f'cohort {c}')
+        ax[i].set(xlabel='time', ylabel='ATT | cohort')
+
+    return(fig)
+
+fig=eventstudyplot(modct)
+```
+
 
 ## Testing for Pre-trends
 
@@ -400,7 +508,8 @@ for some chosen $M$
 - Linear covariates could lead to same problem as with matching
 
 - Doubly robust estimator @sz2020
-  - [doubleml](https://docs.doubleml.org/stable/examples/py_double_ml_did.html) package partially implements it
+  - [doubleml](https://docs.doubleml.org/stable/examples/py_double_ml_did.html) package implements it
+  - see example notebook from chapter 16 of @causalml2024
 
 
 ## Sources and Further Reading

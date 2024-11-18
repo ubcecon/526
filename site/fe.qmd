@@ -141,11 +141,19 @@ plt.ylabel("In-app Purchase (in 1000)");
 
 # Some Theory
 
-## Large $n$, Small $T$
+## What Fixed Effects Cannot Fix
 
-- Often $n>>T$
-- Usual analysis of fixed effects uses asymptotics with $n \to \infty$, $T$ fixed
-  - We will mostly stick to that, but if you have data with $n \approx T$, other approaches can be better
+
+- Fixed effects corrects for time-invariant unobserved confounders, but
+
+::: {.incremental}
+
+- Cannot fix:
+    - Time-varying confounders
+    - Reverse causality
+    - Can make some biases worse if "between" $i$ variation in $X_{it}$ is useful (e.g. measurement error)
+
+:::
 
 ## Strict Exogeneity
 
@@ -173,6 +181,16 @@ $\Er[X_{it} \epsilon_{is}] = 0$ for $t \leq s$
 - Generally, good idea to use clustered standard errors, clustered on $i$
 - See @mackinon2023 for guide to clustered standard errors
 
+```{python}
+import pyfixest as pf
+pf.feols('purchase ~ mkt_costs | city', data=toy_panel, vcov={'CRV1': 'city'}).summary()
+```
+
+## Large $n$, Small $T$
+
+- Often $n>>T$
+- Usual analysis of fixed effects uses asymptotics with $n \to \infty$, $T$ fixed
+  - We will mostly stick to that, but if you have data with $n \approx T$, other approaches can be better
 
 
 ## Sources and Further Reading
