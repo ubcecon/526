@@ -512,7 +512,7 @@ for some chosen $M$
   - see example notebook from chapter 16 of @causalml2024
 
 
-## Sources and Further Reading
+## Sources and Further Reading {.smaller}
 
 - @facure2022 [chapter 1]
 - @hk2021 [chapter 16]

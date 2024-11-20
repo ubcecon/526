@@ -29,10 +29,13 @@ bibliography: 526.bib
 7. [Advanced difference in differences](moredid.qmd), [notebook](moredid.ipynb)
    - Reading: [chapter 24](https://matheusfacure.github.io/python-causality-handbook/24-The-Diff-in-Diff-Saga.html) of @facure2022, @roth2023, @dd2022
 
+9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
+   - Reading: [Chapter 8 and 9](https://matheusfacure.github.io/python-causality-handbook/08-Instrumental-Variables.html) of @facure2022
+
+
 8. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
 
-9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
 
 10. [Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
    - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
