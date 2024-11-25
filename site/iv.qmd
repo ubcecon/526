@@ -545,18 +545,14 @@ model._eff_F
   - downside: assumes homoscedasticity
 
 ```{python}
-#| code-fold: true
-#| output: false
 y,X = dmatrices("log_wage ~ 0 + years_of_schooling", data=factor_data, return_type='dataframe')
 Z,controls = dmatrices("q4 ~  C(year_of_birth) + C(state_of_birth)", data=factor_data, return_type='dataframe')
 controls.drop("Intercept", axis=1,inplace=True)
 ivm = ivmodels.KClass(1).fit(X=X,y=y,Z=Z,C=controls)
-```
-
-```{python}
 sa = ivm.summary(X=X,y=y,Z=Z,C=controls, test='anderson-rubin', feature_names=["years_of_schooling"])
 print(sa)
 ```
+## Identification Robust Inference
 
 ```{python}
 sl = ivm.summary(X=X,y=y,Z=Z,C=controls, test='lagrange multiplier', feature_names=["years_of_schooling"])

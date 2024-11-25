@@ -123,7 +123,7 @@ $$
 \hat{\tau}_{1t} = Y_{1t} -
 \underbrace{\sum_{j=2}^{J+1} \hat{w}_j Y_{jt}}_{\hat{Y}_{1t}(0)}
 $$
-- $\hat{w}_j$ chosen to make synthetic control close to treated unit in before treatment
+- $\hat{w}_j$ chosen to make synthetic control close to treated unit before treatment
 
 ## Variables to Match
 
@@ -131,7 +131,7 @@ $$
 $$
 \mathbf{X}_1 = \left(Y_{11}, \cdots Y_{1T_0}, z_{11}, \cdots, z_1K \right)^T
 $$
-- Matrix of same variabels for untreated
+- Matrix of same variables for untreated
 $$
 \mathbf{X}_0 = \begin{pmatrix}
 Y_{21} & \cdots & Y_{2T_0} & z_{21} & \cdots & z_{2K} \\
