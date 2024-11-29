@@ -506,6 +506,7 @@ g.fig.show()
 ## Sources and Further Reading
 
 - Section on generic ML for heterogeneous effects is based on @cddf2023 and my [earlier notes](https://datascience.quantecon.org/applications/heterogeneity.html)
+- Chapter 15 of @causalml2024
 
 
 ## References

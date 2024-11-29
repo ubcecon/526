@@ -569,3 +569,5 @@ print(sl)
 - Chapters 6, 12, and 13 of @causalml2024
 
 - [The Effect: Chapter 19 - Instrumental Variables](https://www.theeffectbook.net/ch-InstrumentalVariables.html) @hk2021
+
+## References

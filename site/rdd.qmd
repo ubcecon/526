@@ -1,0 +1,249 @@
+---
+title: "Regression Discontinuity"
+subtitle: "ECON526"
+author:
+  - name: Paul Schrimpf
+    email: paul.schrimpf@ubc.ca
+    affiliations: University of British Columbia
+format:
+    revealjs:
+        min-scale: 0.1
+        smaller: true
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: ""
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+
+
+# Introduction
+
+$$
+\def\indep{\perp\!\!\!\perp} % \def\idp{\perp\kern-5pt\perp}
+\def\Er{\mathrm{E}}
+\def\var{\mathrm{Var}}
+\def\cov{\mathrm{Cov}}
+\def\R{\mathbb{R}}
+\def\En{{\mathbb{E}_n}}
+\def\Pr{\mathrm{P}}
+\newcommand{\norm}[1]{\left\Vert {#1} \right\Vert}
+\newcommand{\abs}[1]{\left\vert {#1} \right\vert}
+\def\inprob{{\,{\buildrel p \over \rightarrow}\,}}
+\def\indist{\,{\buildrel d \over \rightarrow}\,}
+\DeclareMathOperator*{\plim}{plim}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+$$
+
+# Sharp Discontinuity
+
+## Regression Discontinuity
+
+::: {.columns}
+
+::: {.column width=50%}
+
+- Treatment $D_i \in \{0,1\}$
+- Potential outcomes $Y_i(d)$
+- Running variable $R_i$, treatment assignment discontinuous in $r$ at cutoff $c$
+  - Sharp: $P(D|R)$ jumps from 0 to 1
+  - Fuzzy: $P(D|R)$ jumps
+
+:::
+
+::: {.column width=50%}
+
+```{python}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+plt.style.use('tableau-colorblind10')
+
+def pdr(r):
+    if (r < 0):
+        return 0 #0.2/(1+np.exp(-r))
+    else:
+        return 1 # 0.8/(1+0.5*np.exp(-r))
+
+def plotp(ax, pdr):
+    r = np.linspace(-2,2,500)
+    ax.plot(r, list(map(pdr,r)), color='C0')
+    ax.set_xlabel('R')
+    ax.set_ylabel('Pr(D=1|R)')
+    return(ax)
+fig, ax = plt.subplots()
+ax = plotp(ax,pdr)
+```
+
+:::
+
+:::
+
+## Running Variables and Discontinuities
+
+- Usually come from institutional rules
+- Treatment / program eligibility changes discretely with $R$
+- Common running variables:
+  - Geographic location
+  - Income, wealth
+  - Test scores
+  - Votes
+  - Age
+
+## Continuous Potential Outcomes
+
+::: {.columns}
+
+::: {.column width=50%}
+
+- Assume continuity: $\Er[Y(1)|R=r]$ and $\Er[Y(0)|R=r]$ are continuous in $r$
+
+- Observed
+$$
+\Er[Y|R] = \Pr(D=1|R)\Er[Y(1)|R,D=1] + \Pr(D=0|R)\Er[Y(0)|R,D=0]
+$$
+
+- Idea: size of discontinuity in $\Er[Y|R]$ is related to a treatment effect
+
+
+:::
+
+::: {.column width=50%}
+
+```{python}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+plt.style.use('tableau-colorblind10')
+
+def Ey(d,r) :
+    if d < 0.1 :
+        return 0.5*(r+0.2)**3 + 0.1*(r+0.2)**2
+    else :
+        return 2 + 0.3*r**3 + r
+
+fig, ax = plt.subplots(2,1)
+ax[0] = plotp(ax[0],pdr)
+
+def plotey(ax,Ey,pdr) :
+    r = np.linspace(-2,-0.01,100)
+    ax.plot(r, list(map(lambda r: Ey(0,r),r)), color='C0', label="E[Y(0)|R]")
+    r = np.linspace(2,0.01,100)
+    ax.plot(r, list(map(lambda r: Ey(0,r),r)), color='C0', linestyle=":")
+    r = np.linspace(-2,-0.01,100)
+    ax.plot(r, list(map(lambda r: Ey(1,r),r)), color='C1', linestyle=":")
+    r = np.linspace(2,0.01,100)
+    ax.plot(r, list(map(lambda r: Ey(1,r),r)), color='C1', label="E[Y(1)|R]")
+    r = np.linspace(-2,2,200)
+    ax.plot(r,list(map(lambda r: pdr(r)*Ey(1,r) + (1-pdr(r))*Ey(0,r),r)), color='C2', label="E[Y|R]", linestyle="--", alpha=0.8)
+    ax.legend()
+    ax.set_xlabel('R')
+    ax.set_ylabel('E[Y(d)|R]')
+    return(ax)
+
+ax[1] = plotey(ax[1],Ey,pdr)
+
+```
+
+:::
+
+:::
+
+## Identification
+
+- Size of disconuity in $\Er[Y|R]$
+$$
+\begin{align*}
+  \lim_{r \downarrow c} \Er[Y|R=r] - \lim_{r \uparrow c} \Er[Y|R=r] & = \lim_{r \downarrow c} \Er[Y(1)|R=r] - \lim_{r \uparrow c} \Er[Y(D(r),r)|R=r] \\
+  & \Er[Y(1) - Y(0) | R=c]
+\end{align*}
+$$
+- Identifies ATE conditional on being at the cutoff
+- Assuming:
+   1. Sharp discontinuity $P(D|R=r) = \begin{cases} 0 & \; r<c \\ 1 & r \geq c \end{cases}$
+   2. Continuity of $\Er[Y(1)|R=r]$ and $\Er[Y(0)|R=r]$
+
+## Data
+
+```{python}
+#| code-fold: true
+n = 1_000
+sig = 2
+fig,ax=plt.subplots()
+r = np.random.rand(n)*4-2
+y = np.vectorize(lambda r: Ey(np.sign(r)*2+1,r) + np.random.randn()*sig)(r)
+ax =plotey(ax,Ey,pdr)
+ax.scatter(r,y,color='C2')
+plt.show()
+```
+
+## Estimation
+
+- Fit regression to left and right of discontinuity using only observations near the cutoffs
+
+```{python}
+import pandas as pd
+import statsmodels.formula.api as smf
+from statsmodels.iolib.summary2 import summary_col
+
+df = pd.DataFrame({'y':y,'r':r})
+
+def rdd(df, h, c=0, R='r', Y='y') :
+    wdf = df.loc[np.abs(df[R]-c)<=h]
+    m=smf.ols(f'{Y} ~ I({R}-c)*I({R}>c)',wdf).fit(cov_type="HC3")
+    return(m)
+
+bandwidths=[0.1, .25, 0.5, 1.]
+models = [rdd(df,h) for h in bandwidths]
+summary_col(models, model_names=[f"h={h:.2}" for h in bandwidths])
+```
+
+```{python}
+def plotrdd(ax,df, h, c=0, R='r',Y='y') :
+    df = df.sort_values(R)
+    m = rdd(df,h,c,R,Y)
+    df.plot.scatter(x=R,y=Y,ax=ax,color="C0")
+    df.assign(predictions=m.fittedvalues).plot(x=R, y="predictions", ax=ax, color="C1")
+    ax.get_legend().remove()
+    return(ax)
+
+fig,ax = plt.subplots(2,2)
+for (i,h) in enumerate(bandwidths) :
+    plotrdd(ax.flat[i],df,h)
+    ax.flat[i].set_title(f"h={h:.2}")
+```
+
+# Drinking and Mortality
+
+## Drinking and Mortality
+
+- @carpenter2009 (also used as example in @facure2022)
+- Discontinuity at age 21 in US in legal drinking
+- Running variable = age
+- Treatment = legally allowed to drink
+- Outcomes = drinking, mortality from various causes
+
+```{python}
+
+```
+
+
+## Sources and Further Reading
+
+- @facure2022 [chapter 16](https://matheusfacure.github.io/python-causality-handbook/16-Regression-Discontinuity-Design.html)
+- @causalml2024 chapter 17
+- @cattaneo2019 and @cattaneo2024
+- https://rdpackages.github.io/
+
+## References
