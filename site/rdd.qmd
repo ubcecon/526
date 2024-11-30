@@ -82,7 +82,7 @@ def plotp(ax, pdr):
     ax.set_xlabel('R')
     ax.set_ylabel('Pr(D=1|R)')
     return(ax)
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(5,5))
 ax = plotp(ax,pdr)
 ```
 
@@ -105,22 +105,22 @@ ax = plotp(ax,pdr)
 
 ::: {.columns}
 
-::: {.column width=50%}
-
-- Assume continuity: $\Er[Y(1)|R=r]$ and $\Er[Y(0)|R=r]$ are continuous in $r$
-
+::: {.column width="60%"}
+- Assume continuity:
+$$\Er[Y(1)|R=r]$$
+and
+$$\Er[Y(0)|R=r]$$
+are continuous in $r$
 - Observed
 $$
-\Er[Y|R] = \Pr(D=1|R)\Er[Y(1)|R,D=1] + \Pr(D=0|R)\Er[Y(0)|R,D=0]
+\begin{align*}
+\Er[Y|R] = & \Pr(D=1|R)\Er[Y(1)|R,D=1] + \\ & + \Pr(D=0|R)\Er[Y(0)|R,D=0]
+\end{align*}
 $$
-
 - Idea: size of discontinuity in $\Er[Y|R]$ is related to a treatment effect
-
-
 :::
 
-::: {.column width=50%}
-
+::: {.column width="40%"}
 ```{python}
 #| code-fold: true
 import numpy as np
@@ -133,7 +133,7 @@ def Ey(d,r) :
     else :
         return 2 + 0.3*r**3 + r
 
-fig, ax = plt.subplots(2,1)
+fig, ax = plt.subplots(2,1, figsize=(4,8))
 ax[0] = plotp(ax[0],pdr)
 
 def plotey(ax,Ey,pdr) :
@@ -155,7 +155,6 @@ def plotey(ax,Ey,pdr) :
 ax[1] = plotey(ax[1],Ey,pdr)
 
 ```
-
 :::
 
 :::
@@ -165,8 +164,8 @@ ax[1] = plotey(ax[1],Ey,pdr)
 - Size of disconuity in $\Er[Y|R]$
 $$
 \begin{align*}
-  \lim_{r \downarrow c} \Er[Y|R=r] - \lim_{r \uparrow c} \Er[Y|R=r] & = \lim_{r \downarrow c} \Er[Y(1)|R=r] - \lim_{r \uparrow c} \Er[Y(D(r),r)|R=r] \\
-  & \Er[Y(1) - Y(0) | R=c]
+  \lim_{r \downarrow c} \Er[Y|R=r] - \lim_{r \uparrow c} \Er[Y|R=r] & = \lim_{r \downarrow c} \Er[Y(1)|R=r] - \lim_{r \uparrow c} \Er[Y(0),r)|R=r] \\
+  & = \Er[Y(1) - Y(0) | R=c]
 \end{align*}
 $$
 - Identifies ATE conditional on being at the cutoff
@@ -184,7 +183,7 @@ fig,ax=plt.subplots()
 r = np.random.rand(n)*4-2
 y = np.vectorize(lambda r: Ey(np.sign(r)*2+1,r) + np.random.randn()*sig)(r)
 ax =plotey(ax,Ey,pdr)
-ax.scatter(r,y,color='C2')
+ax.scatter(r,y,color='C2', alpha=0.5,s=1)
 plt.show()
 ```
 
@@ -193,6 +192,7 @@ plt.show()
 - Fit regression to left and right of discontinuity using only observations near the cutoffs
 
 ```{python}
+#| output-location: slide
 import pandas as pd
 import statsmodels.formula.api as smf
 from statsmodels.iolib.summary2 import summary_col
@@ -204,38 +204,264 @@ def rdd(df, h, c=0, R='r', Y='y') :
     m=smf.ols(f'{Y} ~ I({R}-c)*I({R}>c)',wdf).fit(cov_type="HC3")
     return(m)
 
-bandwidths=[0.1, .25, 0.5, 1.]
+bandwidths=[.25, 0.5, 1., 2.]
 models = [rdd(df,h) for h in bandwidths]
 summary_col(models, model_names=[f"h={h:.2}" for h in bandwidths])
 ```
 
+## Plotting Estimates
+
 ```{python}
-def plotrdd(ax,df, h, c=0, R='r',Y='y') :
+#| output-location: slide
+def plotrdd(ax,df, h, c=0, R='r',Y='y', Ey=Ey) :
     df = df.sort_values(R)
     m = rdd(df,h,c,R,Y)
-    df.plot.scatter(x=R,y=Y,ax=ax,color="C0")
-    df.assign(predictions=m.fittedvalues).plot(x=R, y="predictions", ax=ax, color="C1")
-    ax.get_legend().remove()
+    df.plot.scatter(x=R,y=Y,ax=ax,color="C2",alpha=0.5,s=1)
+    df.assign(predictions=m.fittedvalues).plot(x=R, y="predictions",label='Estimate', ax=ax, color="C3")
+    df.assign(Ey0=df[R].apply(lambda r: Ey(0,r))).plot(x=R,y='Ey0',label="E[Y(0)|R]",ax=ax,color="C0",linestyle="--")
+    df.assign(Ey1=df[R].apply(lambda r: Ey(1,r))).plot(x=R,y='Ey1',label="E[Y(1)|R]",ax=ax,color="C1",linestyle="--")
+    #ax.get_legend().remove()
     return(ax)
 
-fig,ax = plt.subplots(2,2)
+fig,ax = plt.subplots(2,2, figsize=(10,5))
 for (i,h) in enumerate(bandwidths) :
     plotrdd(ax.flat[i],df,h)
     ax.flat[i].set_title(f"h={h:.2}")
 ```
 
-# Drinking and Mortality
+## Questions
 
-## Drinking and Mortality
+- Is there a better way to visualize?
+- How to choose `h`?
+- Are these standard errors correct?
+- Are there any falsification or other checks to do?
 
-- @carpenter2009 (also used as example in @facure2022)
-- Discontinuity at age 21 in US in legal drinking
-- Running variable = age
-- Treatment = legally allowed to drink
-- Outcomes = drinking, mortality from various causes
+## Binned Scatter Plot
+
+::: {.columns}
+
+::: {.column width=50%}
+
+- Divide range of $R$ into bins, plot mean within each bin
+- Many papers just show binned means, but better to show uncertainty / variability in data too
+  - Two good options in `rdrobust` package:
+     1. `binselect='es'` or `binselect='qs'` and plot confidence intervals
+     2. `binselect='esmv'` or `binselect='qsmv'`
+- See @cattaneo2019 section 3 and @binscatter2024
+
+:::
+
+::: {.column width=50%}
 
 ```{python}
+#| code-fold : true
+import rdrobust
+rdp = rdrobust.rdplot(df.y,df.r,c=0,hide=True, binselect='es')
+fg,ax=plt.subplots(figsize=(4,7))
+pltdf = rdp.vars_bins
+pltdf.plot.scatter(x='rdplot_mean_bin',y='rdplot_mean_y', color='black',ax=ax,label='IMSE optimal bins')
+ax.set_xlabel('R')
+ax.set_ylabel('Y')
+ax.errorbar(x=pltdf.rdplot_mean_bin,y=pltdf.rdplot_mean_y,
+             yerr=[pltdf.rdplot_mean_y-pltdf.rdplot_ci_l,pltdf.rdplot_ci_r - pltdf.rdplot_mean_y],
+             ls='none',color="black")
+rdp = rdrobust.rdplot(df.y,df.r,c=0,hide=True, binselect='esmv')
+pltdf = rdp.vars_bins
+pltdf.plot.scatter(x='rdplot_mean_bin',y='rdplot_mean_y', color='C4',ax=ax,label='Variance mimicking bins')
+df.plot.scatter(x='r',y='y',color='C2',s=1,alpha=0.5,label=None,ax=ax)
+ax.legend()
+plt.show()
+```
+:::
 
+:::
+
+## Bandwidth Selection
+
+- Bandwith, `h`, has bias variance tradeoff
+- Larger `h` $\Rightarrow$ lower variance, higher bias
+- Smaller `h` $\Rightarrow$ higher variance, lower bias
+- Optimal `h` balances bias and variance
+- Optimal `h` will decrease with sample size
+
+## Bandwidth Selection
+
+```{python}
+rd = rdrobust.rdrobust(df.y,df.r, kernel="uniform",  bwselect="msetwo")
+rd
+```
+
+## Confidence Intervals
+
+- Optimal `h` has $\mathrm{Bias}^2 = \var$
+- Need to correct for bias for confidence intervals to be correct
+- Use "Robust" interval reported by `rdrobust`
+- See section 4.3 of @cattaneo2019
+
+## Kernel Weighting
+
+- Instead of treating all observations within bandwith as equally important for estimating discontinuity, we might want to weight observations closer to discontinuity more
+- "triangular" kernel is best
+
+
+## Manipulation of Running Variable
+
+- If units can change $R_i$, they might do in way to change treatment status
+- Manipulation of $R_i$ makes continuity of $\Er[Y(d)|R]$ less plausible
+- Check for bunching in density of $R_i$ near cutoff
+
+```{python}
+fig,ax=plt.subplots()
+ax.hist(x=df.r[df.r<=0],bins=20,color="C0")
+ax.hist(x=df.r[df.r>0],bins=20,color="C1")
+ax.set_xlim(-2,2)
+ax.axvline(0,color="black")
+plt.show()
+```
+
+## Placebo Tests
+
+- If have data on outcomes not affected by treatment (e.g. if predetermined) can check that RD estimate for them is 0
+
+```{python}
+df.x = np.sin(2*df.r)*np.exp(0.5*df.r) + np.random.randn(df.shape[0])
+rdx = rdrobust.rdrobust(df.x,df.r, kernel="triangular",  bwselect="msetwo")
+rdx
+```
+
+## Placebo Tests
+
+```{python}
+rdpx = rdrobust.rdplot(df.x,df.r,c=0,hide=False, binselect='es',x_label="R",y_label="x",ci=95) #, #p=1,
+                       #kernel="triangular", h=rdx.bws.loc['h'],
+
+```
+
+# Fuzzy Discontinuity
+
+## Fuzzy Discontinuity
+
+::: {.columns}
+
+::: {.column width=50%}
+
+- $P(D|R)$ discontinuous at $c$
+- imperfect compliance
+- Idea: use discontinuity as instrument for treatment
+
+:::
+
+::: {.column width=50%}
+```{python}
+#| code-fold: true
+def pdr(r):
+    if (r < 0):
+        return 0.2/(1+np.exp(-r))
+    else:
+        return 0.8/(1+0.5*np.exp(-r))
+
+fig, ax = plt.subplots(figsize=(5,5))
+ax = plotp(ax,pdr)
+```
+:::
+
+:::
+
+## Merit Based Financial Aid for Low-Income Students
+
+- @lrs2020 (also used as example in @cattaneo2024)
+- Full undergraduate tuition available if
+  1. Standardized test $\geq$ 91%-tile
+  2. Wealth index $\leq$ cutoff(region)
+- Two discontinuities
+- Outcome $=$ postsecondary enrollment
+- Focus on wealth cutoff
+
+
+## Merit Based Financial Aid for Low-Income Students
+
+```{python}
+lrs_all = pd.read_stata('data/data_RD.dta')
+lrs = lrs_all.loc[lrs.eligible_saber11==1]
+lrs.columns
+```
+
+## First Stage: Effect on Receiving Tuition Subsidy
+
+::: {.columns}
+
+::: {.column width=50%}
+
+```{python}
+df=lrs[["running_sisben","beneficiary_spp","icfes_score_20142","spadies_any","spadies_hq"]].dropna()
+rdrobust.rdplot(df.beneficiary_spp, df.running_sisben, binselect='esmv', x_label="Wealth Index",y_label="P(D|wealth)")
+```
+
+:::
+
+::: {.column width=50%}
+
+```{python}
+fs = rdrobust.rdrobust(df.beneficiary_spp, df.running_sisben, kernel="triangular",  bwselect="mserd")
+fs
+```
+
+:::
+
+:::
+
+
+## Reduced Form: Effect on Postsecondary Enrollment
+
+
+::: {.columns}
+
+::: {.column width=50%}
+
+```{python}
+rdrobust.rdplot(df.spadies_any, df.running_sisben, binselect='esmv', x_label="Wealth Index",y_label="P(postsecondary|wealth)")
+```
+:::
+
+::: {.column width=50%}
+
+```{python}
+rf = rdrobust.rdrobust(df.spadies_any, df.running_sisben, kernel="triangular",  bwselect="mserd")
+rf
+```
+
+:::
+
+:::
+
+## Questions
+
+- How to get an IV estimate?
+- What causal interpretation can we give an IV estimate?
+
+
+## Potential Outcomes
+
+- "Assigned treatment $A_i = 1\{R_i > c\}$
+- Potential treatments $D_i(A_i) \in \{0,1\}$
+- Potential outcomes $Y_i(a, d)$
+- Observed outcome $Y_i(A_i,D_i(A_i))$
+- Exclusion restriction: $R_i$ does not affect treatment or outcome, except through $A_i$
+
+## LATE
+
+- Assume monotonicity: $D_i(1) \geq D_i(0)$
+$$
+\frac{\text{reduced form}}{\text{first stage}} \inprob \Er[Y(1) - Y(0) | wealth=c_w, test>c_t, D_i(1)>D_i(0)]
+$$
+- Optimal bandwidth choice different
+- Use `rdrobust` for bandwidth selection and confidence intervals
+
+## LATE
+
+```{python}
+late = rdrobust.rdrobust(df.spadies_any, df.running_sisben, fuzzy=df.beneficiary_spp)
+late
 ```
 
 

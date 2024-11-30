@@ -43,7 +43,7 @@ bibliography: 526.bib
 11. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
    - Reading: [QuantEcon: Heterogeneity](https://datascience.quantecon.org/applications/heterogeneity.html)
 
+13. [Regression discontinuity](rdd.qmd), [notebook](rdd.ipynb)
+
 12. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
    - Reading: [QuantEcon Datascience: Regression - Neural Networks](https://datascience.quantecon.org/tools/regression.html#neural-networks)
-
-13. Regression discontinuity
