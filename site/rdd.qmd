@@ -18,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: ""
+          data-background-image: "kokaneesunset.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -133,7 +133,7 @@ def Ey(d,r) :
     else :
         return 2 + 0.3*r**3 + r
 
-fig, ax = plt.subplots(2,1, figsize=(4,8))
+fig, ax = plt.subplots(2,1, figsize=(4,7))
 ax[0] = plotp(ax[0],pdr)
 
 def plotey(ax,Ey,pdr) :
@@ -240,24 +240,24 @@ for (i,h) in enumerate(bandwidths) :
 
 ::: {.columns}
 
-::: {.column width=50%}
+::: {.column width=60%}
 
 - Divide range of $R$ into bins, plot mean within each bin
 - Many papers just show binned means, but better to show uncertainty / variability in data too
   - Two good options in `rdrobust` package:
-     1. `binselect='es'` or `binselect='qs'` and plot confidence intervals
-     2. `binselect='esmv'` or `binselect='qsmv'`
+     1. `binselect='es'` or `qs'` and plot confidence intervals
+     2. `binselect='esmv'` or `'qsmv'`
 - See @cattaneo2019 section 3 and @binscatter2024
 
 :::
 
-::: {.column width=50%}
+::: {.column width=40%}
 
 ```{python}
 #| code-fold : true
 import rdrobust
 rdp = rdrobust.rdplot(df.y,df.r,c=0,hide=True, binselect='es')
-fg,ax=plt.subplots(figsize=(4,7))
+fg,ax=plt.subplots(figsize=(4,6))
 pltdf = rdp.vars_bins
 pltdf.plot.scatter(x='rdplot_mean_bin',y='rdplot_mean_y', color='black',ax=ax,label='IMSE optimal bins')
 ax.set_xlabel('R')
@@ -300,8 +300,24 @@ rd
 
 ## Kernel Weighting
 
+::: {.columns}
+
+::: {.column width=40%}
+
 - Instead of treating all observations within bandwith as equally important for estimating discontinuity, we might want to weight observations closer to discontinuity more
 - "triangular" kernel is best
+
+:::
+
+::: {.column width=60%}
+
+```{python}
+rd = rdrobust.rdrobust(df.y,df.r, kernel="triangular",  bwselect="msetwo")
+rd
+```
+:::
+
+:::
 
 
 ## Manipulation of Running Variable
@@ -309,6 +325,8 @@ rd
 - If units can change $R_i$, they might do in way to change treatment status
 - Manipulation of $R_i$ makes continuity of $\Er[Y(d)|R]$ less plausible
 - Check for bunching in density of $R_i$ near cutoff
+
+## Manipulation of Running Variable
 
 ```{python}
 fig,ax=plt.subplots()
@@ -321,20 +339,28 @@ plt.show()
 
 ## Placebo Tests
 
+::: {.columns}
+
+::: {.column width=40%}
+
 - If have data on outcomes not affected by treatment (e.g. if predetermined) can check that RD estimate for them is 0
+
+:::
+
+::: {.column width=60%}
 
 ```{python}
 df.x = np.sin(2*df.r)*np.exp(0.5*df.r) + np.random.randn(df.shape[0])
 rdx = rdrobust.rdrobust(df.x,df.r, kernel="triangular",  bwselect="msetwo")
 rdx
 ```
+:::
+:::
 
 ## Placebo Tests
 
 ```{python}
-rdpx = rdrobust.rdplot(df.x,df.r,c=0,hide=False, binselect='es',x_label="R",y_label="x",ci=95) #, #p=1,
-                       #kernel="triangular", h=rdx.bws.loc['h'],
-
+rdpx = rdrobust.rdplot(df.x,df.r,c=0,hide=False, binselect='es',x_label="R",y_label="x",ci=95)
 ```
 
 # Fuzzy Discontinuity
@@ -382,57 +408,39 @@ ax = plotp(ax,pdr)
 
 ```{python}
 lrs_all = pd.read_stata('data/data_RD.dta')
-lrs = lrs_all.loc[lrs.eligible_saber11==1]
+lrs = lrs_all.loc[lrs_all.eligible_saber11==1] #
 lrs.columns
 ```
 
 ## First Stage: Effect on Receiving Tuition Subsidy
 
-::: {.columns}
-
-::: {.column width=50%}
 
 ```{python}
+#| output-location: slide
 df=lrs[["running_sisben","beneficiary_spp","icfes_score_20142","spadies_any","spadies_hq"]].dropna()
 rdrobust.rdplot(df.beneficiary_spp, df.running_sisben, binselect='esmv', x_label="Wealth Index",y_label="P(D|wealth)")
 ```
 
-:::
-
-::: {.column width=50%}
+## First Stage: Effect on Receiving Tuition Subsidy
 
 ```{python}
 fs = rdrobust.rdrobust(df.beneficiary_spp, df.running_sisben, kernel="triangular",  bwselect="mserd")
 fs
 ```
 
-:::
-
-:::
-
-
 ## Reduced Form: Effect on Postsecondary Enrollment
 
-
-::: {.columns}
-
-::: {.column width=50%}
-
 ```{python}
+#| output-location: slide
 rdrobust.rdplot(df.spadies_any, df.running_sisben, binselect='esmv', x_label="Wealth Index",y_label="P(postsecondary|wealth)")
 ```
-:::
 
-::: {.column width=50%}
+## Reduced Form: Effect on Postsecondary Enrollment
 
 ```{python}
 rf = rdrobust.rdrobust(df.spadies_any, df.running_sisben, kernel="triangular",  bwselect="mserd")
 rf
 ```
-
-:::
-
-:::
 
 ## Questions
 
