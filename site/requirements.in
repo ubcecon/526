@@ -16,7 +16,6 @@ joblib
 scpi-pkg
 jupyter-cache
 pyfixest
-graphiz
 linearmodels
 ivmodels
 rdrobust
