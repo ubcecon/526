@@ -7,7 +7,7 @@ bibliography: 526.bib
 # Slides
 
 1. [Introduction to Causality](causality_intro.qmd), [notebook](causality_intro.ipynb)
-   - Reading: [Chapter 2](https://causalml-book.org/assets/chapters/CausalML_chap_2.pdf) of @causalml2024 or [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
+   - Reading: [Chapter 2](https://chapters.causalml-book.org/CausalML_chap_2.pdf) of @causalml2024 or [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
 
 2. [Uncertainty Quantification](uncertainty.qmd), [notebook](uncertainty.ipynb)
    - [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html.html) of @facure2022

@@ -108,7 +108,7 @@ $$
 
 ## Selection Bias {.smaller}
 
-- Comparing ATE and APE
+- Comparing ATE and average population effect
 $$ %
 \begin{align*}
 ATE = & \Er[Y_i(1) - Y_i(0)] \\
@@ -143,9 +143,11 @@ $$
   - $\epsilon_i(d) \sim N(0,\sigma^2)$, independent
   - Chooses $\max_d \Er[Y_i(d)|S_i(0), S_i(1)] = \max_d S_i(d)$
 
+## Selection Bias Example
 ```{python}
 #| code-fold: true
-#| output : asis
+#| output: asis
+#| output-location: slide
 import numpy as np
 np.random.seed(0)
 class selectiondata:
@@ -219,7 +221,7 @@ $$
 
 
 ```{python}
-#| output : slide
+#| output-location: slide
 import statsmodels.api as sm
 
 class binarybinaryrct :
@@ -253,7 +255,8 @@ print("\n- All\n\n" + pfizerall.table() + "\n - 65+\n\n" + pfizer65.table())
 
 ## Sources and Further Reading
 
-- [Chapter 2](https://causalml-book.org/assets/chapters/CausalML_chap_2.pdf) of @causalml2024 is the basis for much of these slides, inlcuding the Pfizer/BioNTech Covid Vaccine RCT example
+- [Chapter 2](http://chapters.causalml-book.org/CausalML_chap_2.pdf) of @causalml2024 is the basis for much of these slides, inlcuding the Pfizer/BioNTech Covid Vaccine RCT example
 - [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
+- @heckman2024 for a critique of potential outcomes and argument to use more structured economic models
 
 ## References {.scrollable}
