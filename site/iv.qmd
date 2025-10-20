@@ -161,16 +161,18 @@ $$
 
 ::: {.column width=50%}
 
+
 ```{python}
 #| code-fold: true
-import graphviz as gr
+import pyvis
 
-dot = gr.Digraph()
-dot.edge('X', 'Y', style = 'dashed')
-dot.edge('ϵ','Y')
-dot.edge('ϵ','X')
-dot.edge('Z','X')
-dot
+g = pyvis.network.Network(notebook=True,directed=True, cdn_resources='in_line', height='300px', width='400px')
+g.add_nodes(['X', 'Y', 'Z', 'ϵ'])
+g.add_edge('X', 'Y')
+g.add_edge('ϵ','Y')
+g.add_edge('ϵ','X')
+g.add_edge('Z','X')
+g.show("generiv_iv.html")
 ```
 :::
 
@@ -215,14 +217,15 @@ $$
 
 ```{python}
 #| code-fold: true
-import graphviz as gr
+# import graphviz as gr
 
-g = gr.Digraph()
-g.edge('Education', 'Earnings', style = 'dashed')
-g.edge('Ability', 'Education')
-g.edge('Ability', 'Earnings')
-g.edge('?', 'Education')
-g
+g = pyvis.network.Network(notebook=True,directed=True, cdn_resources='in_line', height='400px', width='500px')
+g.add_nodes(['Education','Earnings','Ability','?'])
+g.add_edge('Education', 'Earnings')
+g.add_edge('Ability','Education')
+g.add_edge('Ability','Earnings')
+g.add_edge('?','Education')
+g.show("ee0_iv.html")
 ```
 
 
@@ -234,12 +237,13 @@ g
 
 ```{python}
 #| code-fold: true
-g = gr.Digraph()
-g.edge('Education', 'Earnings', style = 'dashed')
-g.edge('Ability', 'Education')
-g.edge('Ability', 'Earnings')
-g.edge('Quarter of Birth', 'Education')
-g
+g = pyvis.network.Network(notebook=True,directed=True, cdn_resources='in_line', height='400px', width='400px')
+g.add_nodes(['Education','Earnings','Ability','Quarter of Birth'])
+g.add_edge('Education', 'Earnings')
+g.add_edge('Ability','Education')
+g.add_edge('Ability','Earnings')
+g.add_edge('Quarter of Birth','Education')
+g.show("ee_iv.html")
 ```
 :::
 
@@ -528,7 +532,7 @@ model._eff_F
 - Can we find a better approximation to the finite sample distribution when $\Er[Z_i X_i']$ is small?
 
 - Yes, two approaches lead to the same answers:
-  1. Require uniform (over values of $\Er[Z_iX_i']$) converge
+  1. Require uniform (over values of $\Er[Z_iX_i']$) convergence
   2. Weak instrument asymptotics (instead of $\Er[Z_i X_i]$ fixed with $n$, suppose $\Er[Z_i X_i'] = C/\sqrt{n}$)
 
 - Identification robust tests:

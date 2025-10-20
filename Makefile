@@ -15,10 +15,8 @@ VENVTOUCH := $(SRCDIR)/.venv/touchfile
 venv: $(VENVTOUCH)
 
 $(SRCDIR)/.venv/touchfile: $(SRCDIR)/pyproject.toml
-	cd $(SRCDIR); test -d .venv || python3 -m venv .venv
-	cd $(SRCDIR); source .venv/bin/activate; uv -Sp
+	cd $(SRCDIR); uv sync
 	touch $(VENVTOUCH)
-
 
 html: $(HTMLFILES) data
 
