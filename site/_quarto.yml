@@ -12,8 +12,8 @@ website:
         text: Content
       - href: https://github.com/ubcecon/econ526
         text: Github
-      - text: Slides from Jesse and Phil
-        href: https://ubcecon.github.io/ECON526/lectures/index.html
+      - text: Slides from Jesse
+        href: https://jlperla.github.io/grad_econ_datascience/
       - href: feed.qmd
         text: Feed
 
