@@ -300,7 +300,7 @@ P\left(\frac{1}{\sqrt{n}} \sum_{i=1}^n X_i \in A \right) - P(N(0,I_d) \in A) \ri
 (42 d^{1/4} + 16) \Er[\Vert X \Vert ^3]/\sqrt{n}
 $$
 
-^[See @raic2019 for details.]
+^[See @raic2019 for details and @cck2023 for a similar result for higher dimensions (larger $d$)]
 
 :::
 

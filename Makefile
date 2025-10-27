@@ -7,9 +7,6 @@ HTMLFILES := $(patsubst $(SRCDIR)%,$(OUTDIR)%,$(QMDFILES:.qmd=.html))
 QMDWITHCODE := $(shell grep -rl '```{python}' $(QMDFILES))
 NOTEBOOKS := $(patsubst $(SRCDIR)%,$(OUTDIR)%,$(QMDWITHCODE:.qmd=.ipynb))
 
-updaterequire:
-	source $(SRCDIR)/.venv/bin/activate; python -m pip freeze > $(SRCDIR)/requirements.txt
-
 VENVTOUCH := $(SRCDIR)/.venv/touchfile
 
 venv: $(VENVTOUCH)
