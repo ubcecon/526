@@ -30,9 +30,11 @@ bibliography: 526.bib
 
 ## Introduction
 
-- Have some policy applied to some observations but not others, and observe outcome before and after policy
+- Context:
+  - Have a policy applied to some observations but not others, and observe outcome before and after policy
 
-- Idea: compare outcome before and after policy in treated and untreated group
+- Idea:
+  - Compare outcome before and after policy in treated and untreated group
 
 - Change in outcome in treated group reflects both effect of policy and time trend, change in untreated group captures time trend
 
@@ -123,9 +125,10 @@ $$
 ## Important Assumptions
 
 - No anticipation: $D_{i1}=1$ does not affect $y_{i0}$
-  - built into the potential outcomes notation we used, relax by allowing potential outcomes given sequence of $D$, i.e. $y_{it}(D_{i0},D_{i1})$
+  - built into the potential outcomes notation we used
+  - could relax by allowing potential outcomes given sequence of $D$, i.e. $y_{it}(D_{i0},D_{i1})$, but then need different assumptions and estimator
 
-- Parallel trends: $\Er[\color{red}{y_{i1}(0)} - y_{i0}(0) |D_{i1}=1,D_{i0}=0] =  \Er[y_{i1}(0) - y_{i0}(0) | D_{i1}=0], D_{i0}=0]$
+- Parallel trends: $\Er[\color{red}{y_{i1}(0)} - y_{i0}(0) |D_{i1}=1,D_{i0}=0] =  \Er[y_{i1}(0) - y_{i0}(0) | D_{i1}=0, D_{i0}=0]$
   - not invariant to tranformations of $y$
 
 
@@ -172,6 +175,129 @@ plt.legend();
 from statsmodels.iolib.summary2 import summary_col
 summary_col(smf.ols('deposits ~ poa*jul', data=data).fit(cov_type="HC3"))
 ```
+
+## Parallel Trends and Functional Form
+
+- Parallel trends for an outcome does not imply parallel trends for functions of it
+  - For example,
+    $$
+    \Er[\color{red}{y_{i1}(0)} - y_{i0}(0) |D_{i1}=1,D_{i0}=0] =  \Er[y_{i1}(0) - y_{i0}(0) | D_{i1}=0, D_{i0}=0]
+    $$
+    does not imply
+    $$
+    \Er[\log \color{red}{y_{i1}(0)} - \log y_{i0}(0) |D_{i1}=1,D_{i0}=0] =  \Er[\log y_{i1}(0) - \log y_{i0}(0) | D_{i1}=0, D_{i0}=0]
+    $$
+
+## Parallel Trends in Logs
+
+```{python}
+#| output-location : slide
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Parameters
+n_periods = 5
+n_groups = 2
+group_names = ['Control', 'Treatment']
+
+time = np.arange(n_periods)
+group = np.array([0, 1])  # 0: Control, 1: Treatment
+
+intercepts = [1, 5]  # Different starting points
+trend = 1  # Same trend for both groups
+
+# Simulate outcomes
+data = []
+for g in group:
+    for t in time:
+        y = intercepts[g] + trend * t #+ np.random.normal(0,1)
+        data.append({'group': group_names[g], 'time': t, 'y': y})
+
+df = pd.DataFrame(data)
+df['log_y'] = np.log(df['y'])
+
+# Plot levels
+plt.figure(figsize=(12,5))
+plt.subplot(1,2,1)
+for name, grp in df.groupby('group'):
+    plt.plot(grp['time'], grp['y'], label=name)
+plt.title('Outcome in Levels')
+plt.xlabel('Time')
+plt.ylabel('y')
+plt.legend()
+
+# Plot logs
+plt.subplot(1,2,2)
+for name, grp in df.groupby('group'):
+    plt.plot(grp['time'], grp['log_y'], label=name)
+plt.title('Outcome in Logs')
+plt.xlabel('Time')
+plt.ylabel('log(y)')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+## Parallel Trends in Growth Rates
+
+```{python}
+#| output-location : slide
+
+# Parameters
+n_periods = 10
+group_names = ['Control', 'Treatment']
+initials = [10, 9]  # Different starting values
+growth = [1.10, 1.07]
+growth_trend = -0.005
+
+# Simulate outcomes
+data = []
+for g, initial in enumerate(initials):
+    y = initials[g]
+    for t in range(n_periods):
+        data.append({'group': group_names[g], 'time': t, 'y': y})
+        y *= growth[g] + growth_trend * t
+
+df = pd.DataFrame(data)
+df['log_y'] = np.log(df['y'])
+
+# Compute growth rates (difference in logs)
+df['growth_rate'] = df.groupby('group')['log_y'].diff()
+
+# Plot levels
+plt.figure(figsize=(15,4))
+plt.subplot(1,3,1)
+for name, grp in df.groupby('group'):
+    plt.plot(grp['time'], grp['y'], label=name)
+plt.title('Outcome in Levels')
+plt.xlabel('Time')
+plt.ylabel('y')
+plt.legend()
+
+# Plot logs
+plt.subplot(1,3,2)
+for name, grp in df.groupby('group'):
+    plt.plot(grp['time'], grp['log_y'], label=name)
+plt.title('Outcome in Logs')
+plt.xlabel('Time')
+plt.ylabel('log(y)')
+plt.legend()
+
+# Plot growth rates
+plt.subplot(1,3,3)
+for name, grp in df.groupby('group'):
+    plt.plot(grp['time'], grp['growth_rate'], label=name)
+plt.title('Growth Rates (Δlog(y))')
+plt.xlabel('Time')
+plt.ylabel('Growth Rate')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
 
 ## Further Topics
 
