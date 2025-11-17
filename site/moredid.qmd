@@ -186,6 +186,59 @@ def plotwd(D):
 plotwd(D)
 ```
 
+## Distribution of Weights with a Single Treatment Time
+
+```{python}
+#| code-fold: true
+def histweights(D, ω=weights(D)):
+    """
+    D: np.ndarray, shape (n, T), binary treatment indicators
+    ω: np.ndarray, shape (n, T), weights
+    """
+    n, T = D.shape
+
+    # Ever treated per unit (row)
+    evertreated = np.any(D, axis=1)  # shape (n,)
+    # After any treatment per time (column)
+    aftertreatment = np.any(D, axis=0)  # shape (T,)
+
+    # Create group labels for each (unit, time) pair
+    g = []
+    for i in range(n):
+        for t in range(T):
+            et = evertreated[i]
+            at = aftertreatment[t]
+            label = ("Treated, " if et else "Control, ") + ("After" if at else "Before")
+            g.append(label)
+
+    # Flatten weights for histogram
+    ω_flat = ω.flatten()
+
+    # Plot grouped histogram
+    plt.figure(figsize=(9,3))
+    bins = np.histogram_bin_edges(ω_flat, bins='auto')
+    bin_width = np.diff(bins)[0]
+    bin_centers = bins[:-1] + bin_width / 2
+
+    unique_groups = sorted(set(g))
+    n_groups = len(unique_groups)
+    offsets = np.linspace(-bin_width/2, bin_width/2, n_groups, endpoint=False)
+
+    for idx, group in enumerate(unique_groups):
+        mask = np.array(g) == group
+        hist, _ = np.histogram(ω_flat[mask], bins=bins)
+        plt.bar(bin_centers + offsets[idx], hist, width=bin_width/(n_groups+0.5), label=group, align='center')
+
+    plt.title("Histogram of Weights")
+    plt.xlabel("Weight")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+histweights(D)
+```
+
 ## Weights with Early and Late Treated
 
 ```{python}
@@ -195,6 +248,12 @@ pt[1] = 0.3
 pt[T-2] = 0.6
 D = assigntreat(n,T,pt)
 plotwd(D)
+```
+
+## Distribution of Weights with Early and Late Treated
+
+```{python}
+histweights(D)
 ```
 
 ## Sign Reversal
@@ -256,10 +315,11 @@ $$
 ## What to Do?
 
 - Option 1: Use an appropriate package
-   - [differences](https://github.com/bernardodionisi/differences)
-   - [pyfixest](https://pypi.org/project/pyfixest/) (Gardner's 2-stage estimator or Dube et al (2023) local projections)
+   - [pyfixest](https://pypi.org/project/pyfixest/) see especially their [docs on difference in differences](https://py-econometrics.github.io/pyfixest/difference-in-differences.html)
+   - [csdid](https://github.com/d2cml-ai/csdid)
    - doubleml (see chapter 16 of @causalml2024)
-   - see https://asjadnaqvi.github.io/DiD/ for more options (but none are python)
+   - [differences](https://github.com/bernardodionisi/differences)
+   - see [https://asjadnaqvi.github.io/DiD/](https://asjadnaqvi.github.io/DiD/) for more options
 
 
 ## What to Do?
@@ -383,9 +443,41 @@ $$
 $$
 
 ## Regression with Cohort-Time Interactions
+
 ```{python}
 modct = pf.feols("y ~ C(cohort)*C(t) | id + t",dfc, vcov={"CRV1":"id"})
 pf.etable(modct, type='md')
+```
+
+## Using `pyfixest`: Cohort by Time Estimates
+
+
+```{python}
+#| code-fold: true
+
+dfc['first_treat_time'] = (
+    dfc.groupby('id').apply(
+        lambda g: g.loc[g['D'] == 1, 't'].iloc[0] if (g['D'] == 1).any() else 0
+    ).reindex(dfc['id']).values
+)
+fit_saturated = pf.event_study(
+    data=dfc,
+    yname="y",
+    idname="id",
+    tname="t",
+    gname="first_treat_time",
+    estimator="saturated",
+)
+
+fit_saturated.iplot()
+```
+
+## Using `pyfixest`: Aggregating Cohorts
+
+```{python}
+#| code-fold: true
+fit_saturated.aggregate()
+fit_saturated.iplot_aggregate()
 ```
 
 # Pre-Trends
@@ -465,6 +557,7 @@ def eventstudyplot(modct) :
 
 fig=eventstudyplot(modct)
 ```
+
 
 
 ## Testing for Pre-trends
