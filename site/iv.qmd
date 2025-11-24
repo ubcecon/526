@@ -476,6 +476,8 @@ for j in range(len(gamma)):
     ax.flat[j].set_title(f"First stage E[t]={np.sqrt(n)*gamma[j]/sig:.3}")
     ax.flat[j].plot(x*se+b0,phix)
     ax.flat[j].set_xlim(-3*se +1,3*se+1)
+
+fig.tight_layout()
 ```
 ## Weak Instrument Simulation : t-stat
 
@@ -498,6 +500,8 @@ for j in range(len(gamma)):
     ax.flat[j].set_title(f"First stage E[t]={np.sqrt(n)*gamma[j]/sig:.3}")
     ax.flat[j].plot(x,phix)
     ax.flat[j].set_xlim(-3,3)
+
+fig.tight_layout()
 ```
 
 ## Weak Instruments

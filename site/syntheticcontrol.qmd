@@ -69,9 +69,6 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
 
-#if 'ipykernel' in sys.modules:
-#    %matplotlib inline
-
 pd.set_option("display.max_columns", 20)
 style.use("fivethirtyeight")
 ```
@@ -346,7 +343,6 @@ effects = [state.query("year==2000").iloc[0]["cigsale"] - state.query("year==200
 calif_effect = cigar.query("california & year==2000").iloc[0]["cigsale"] - calif_synth[-1]
 
 print("California Treatment Effect for the Year 2000:", calif_effect)
-np.array(effects)
 
 np.mean(np.array(effects) < calif_effect)
 ```
