@@ -447,12 +447,31 @@ from sklearn.preprocessing import PolynomialFeatures
 import statsmodels as sm
 import statsmodels.formula.api as smf
 from statsmodels.iolib.summary2 import summary_col
+import os
+import requests
 ```
 
 ```{python}
-cpsall = pd.read_stata("https://www.nber.org/morg/annual/morg20.dta")
+url = 'https://www.nber.org/morg/annual/morg23.dta'
+local_filename = 'data/morg23.dta'
+
+if not os.path.exists(local_filename):
+    response = requests.get(url)
+    with open(local_filename, 'wb') as file:
+        file.write(response.content)
+
+cpsall=pd.read_stata(local_filename)
 # take subset of data just to reduce computation time
 cps = cpsall.sample(30000, replace=False, random_state=0)
+cps["female"] = (cps.sex==2)
+cps["log_earn"] = np.log(cps["earnwke"])
+cps["log_uhours"] = np.log(cps.uhourse)
+cps["log_hourslw"] = np.log(cps.hourslw)
+cps.replace(-np.inf, np.nan, inplace=True)
+cps["nevermarried"] = cps.marital==7
+cps["wasmarried"] = (cps.marital >= 4) & (cps.marital <= 6)
+cps["married"] = cps.marital <= 3
+
 cps.describe()
 ```
 
@@ -499,22 +518,8 @@ def partial_linear(y, d, X, yestimator, destimator, folds=3):
 
 ```{python}
 #| code-fold: true
-cps["female"] = (cps.sex==2)
-cps["log_earn"] = np.log(cps.earnwke)
-cps.loc[np.isinf(cps.log_earn), "log_earn"] = np.nan
-cps["log_uhours"] = np.log(cps.uhourse)
-cps.loc[np.isinf(cps.log_uhours), "log_uhours"] = np.nan
-cps["log_hourslw"] = np.log(cps.hourslw)
-cps.loc[np.isinf(cps.log_hourslw),"log_hourslw"] = np.nan
-cps["log_wageu"] = cps.log_earn - cps.log_uhours
-cps["log_wagelw"] = cps.log_earn - cps.log_hourslw
-
 lm = list()
 lm.append(smf.ols(formula="log_earn ~ female", data=cps,
-                  missing="drop").fit(cov_type='HC0'))
-lm.append( smf.ols(formula="log_wageu ~ female", data=cps,
-                   missing="drop").fit(cov_type='HC0'))
-lm.append(smf.ols(formula="log_wagelw ~ female", data=cps,
                   missing="drop").fit(cov_type='HC0'))
 lm.append(smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps,
                   missing="drop").fit(cov_type='HC0'))
@@ -525,7 +530,7 @@ summary_col(lm, stars=True)
 
 ```{python}
 from patsy import dmatrices
-fmla  = "log_earn + female ~ log_uhours + log_hourslw + I(age**2) + age + C(grade92) + C(race) + C(smsastat) + C(unionmme) + C(unioncov)" #C(ind02) + C(occ2012)"
+fmla  = "log_earn + female ~ log_uhours + log_hourslw + I(age**2) + age + C(grade92) + C(race) + C(smsastat) + C(unionmme) + C(unioncov) + nevermarried + wasmarried + married" #C(ind02) + C(occ2012)"
 yd, X = dmatrices(fmla,cps)
 female = yd[:,1]
 logearn = yd[:,2];
@@ -714,6 +719,21 @@ dml_irm_lasso.fit()
 dml_irm_lasso.summary
 ```
 
+## IRM Lasso: Results
+
+```{python}
+dml_irm_lasso.summary
+```
+
+```{python}
+dml_irm_lasso.gate(groups=pd.DataFrame(X[:,X.design_info.slice('married')])).summary
+```
+
+```{python}
+dml_irm_lasso.gate(groups=pd.DataFrame(X[:,X.design_info.slice('nevermarried')])).summary
+```
+
+
 ## Interactive Regression Model - Trees
 
 ```{python}
@@ -725,7 +745,19 @@ dml_irm_gbt = doubleml.DoubleMLIRM(dml_data,
                                      trimming_threshold = 0.01,
                                      n_folds = 3)
 dml_irm_gbt.fit()
+```
+
+## IRM Trees: Results
+```{python}
 dml_irm_gbt.summary
+```
+
+```{python}
+dml_irm_gbt.gate(groups=pd.DataFrame(X[:,X.design_info.slice('married')])).summary
+```
+
+```{python}
+dml_irm_gbt.gate(groups=pd.DataFrame(X[:,X.design_info.slice('nevermarried')])).summary
 ```
 
 ## Sources and Further Reading
