@@ -219,6 +219,8 @@ $$
 
 ## Code
 
+- doubleml now has functions for [CATE BLP](https://docs.doubleml.org/stable/api/generated/doubleml.utils.DoubleMLBLP.html#doubleml.utils.DoubleMLBLP) and [GATE](https://docs.doubleml.org/stable/guide/heterogeneity.html#group-average-treatment-effects-gates); use those instead of the code below
+
 ```{python}
 # for clustering standard errors
 def get_treatment_se(fit, cluster_id, rows=None):
