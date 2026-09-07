@@ -204,7 +204,7 @@ fig.show()
 ```{python}
 def multilayer(d,width,depth,activation=nn.ReLU()):
     mlp = nn.Sequential(
-        nn.Linear(d,width),
+        nn.Linear(d,width, bias=True),
         activation
     )
     for i in range(depth-1):
@@ -235,7 +235,7 @@ for i in range(epochs):
         ax.plot(xlin,mlp(xlin.reshape(-1,1)).data, alpha=i/epochs, color='k')
         mlp.zero_grad()
     loss = lossfn(y,mlp(x))
-    #print(f"{i}: {loss.item()}")
+    print(f"{i}: {loss.item()}")
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
