@@ -59,7 +59,7 @@ ATE = \int \Er[Y|T=1,X=x] - \Er[Y|T=0,X=x] dP(x)
 $$
 - Regression gives the best linear approximation to $\Er[Y|T,X]$, so why not just estimate linear regression
 $$
-Y_i = \hat{\alpha} T_i + X_i'\hat{\beta} + \hat{\epsilon}_i
+Y_i = \hat{\alpha} D_i + X_i'\hat{\beta} + \hat{\epsilon}_i
 $$
 and, and then use $\hat{\alpha}$ as an estimate of the ATE?
 
@@ -68,21 +68,21 @@ and, and then use $\hat{\alpha}$ as an estimate of the ATE?
 - Partial out (Frish-Waugh-Lovell theorem)
 $$
 \begin{align*}
-\hat{\alpha} = & \frac{\frac{1}{n} \sum_{i=1}^n Y_i (T_i - X_i'(X'X)^{-1}X'T)}
-    {\frac{1}{n} \sum_{i=1}^n (T_i - X_i'(X'X)^{-1}X'T)^2} \\
-    \inprob & \Er\left[Y_i \underbrace{\frac{T_i - X_i'\pi}{\Er[(T_i - X_i'\pi)^2]}}_{\equiv \omega(T_i,X_i)}\right] \\
-    = & \Er\left[Y_{0,i} \omega(T_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(T_i,X_i)T_i\right]
+\hat{\alpha} = & \frac{\frac{1}{n} \sum_{i=1}^n Y_i (D_i - X_i'(X'X)^{-1}X'T)}
+    {\frac{1}{n} \sum_{i=1}^n (D_i - X_i'(X'X)^{-1}X'T)^2} \\
+    \inprob & \Er\left[Y_i \underbrace{\frac{D_i - X_i'\pi}{\Er[(D_i - X_i'\pi)^2]}}_{\equiv \omega(D_i,X_i)}\right] \\
+    = & \Er\left[Y_{0,i} \omega(D_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(D_i,X_i)D_i\right]
 \end{align*}
 $$
-where $\pi = \argmin_{\tilde{\pi}} \Er[(T_i - X_i'\tilde{\pi})^2]$
+where $\pi = \argmin_{\tilde{\pi}} \Er[(D_i - X_i'\tilde{\pi})^2]$
 
 - Note: $\Er[\omega(T,X)] = 0$, $\Er[T\omega(T,X)] = 1$
 
 ## Why not regression?
 
-- $\plim \hat{\alpha} = \Er\left[Y_{0,i} \omega(T_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(T_i,X_i)T_i\right]$
+- $\plim \hat{\alpha} = \Er\left[Y_{0,i} \omega(D_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(D_i,X_i)D_i\right]$
 
-- What can be in the range of $\omega(T,X) = \frac{T - X'\pi}{\Er[(T_i - X_i'\pi)^2]}$?
+- What can be in the range of $\omega(T,X) = \frac{T - X'\pi}{\Er[(D_i - X_i'\pi)^2]}$?
 
 ## Why not regression?
 
@@ -204,7 +204,7 @@ $$
 
 - Estimator
 $$
-\widehat{ATE}^{IPW} = \frac{1}{n} \sum_{i=1}^n \frac{Y_iT_i}{\hat{p}(X_i)} - \frac{Y_i(1-T_i)}{1-\hat{p}(X_i)}
+\widehat{ATE}^{IPW} = \frac{1}{n} \sum_{i=1}^n \frac{Y_iD_i}{\hat{p}(X_i)} - \frac{Y_i(1-D_i)}{1-\hat{p}(X_i)}
 $$
 where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
 
@@ -218,8 +218,8 @@ where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
 $$
 \begin{align*}
 \widehat{ATE}^{DR} = & \frac{1}{n} \sum_{i=1}^n \hat{E}[Y|T=1,X=X_i] - \hat{E}[Y|T=0,X=X_i] + \\
-& + \frac{1}{n} \sum_{i=1}^n  \frac{T_i(Y_i - \hat{E}[Y|T=1,X=X_i])}{\hat{p}(X_i)} - \\
-& - \frac{(1-T_i)(Y_i - \hat{E}[Y|T=0,X=X_i])} {1-\hat{p}(X_i)}
+& + \frac{1}{n} \sum_{i=1}^n  \frac{D_i(Y_i - \hat{E}[Y|T=1,X=X_i])}{\hat{p}(X_i)} - \\
+& - \frac{(1-D_i)(Y_i - \hat{E}[Y|T=0,X=X_i])} {1-\hat{p}(X_i)}
 \end{align*}
 $$
 

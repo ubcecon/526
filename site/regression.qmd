@@ -99,12 +99,12 @@ print(f"difference in means = {ate[0]}, SE = {ate[1]}")
 ```
 - Regression estimate
 $$
-y_i = \beta_0 + \beta_1 T_i + \epsilon_i
+y_i = \beta_0 + \beta_1 D_i + \epsilon_i
 $$
-  - $\Er[Y_i\mid T_i] = \beta_0 + \beta_1 T_i + \epsilon_i$
+  - $\Er[Y_i\mid D_i] = \beta_0 + \beta_1 D_i + \epsilon_i$
   $$
   \begin{align*}
-  ATE = & \Er[Y_i\mid T_i=1] - E[Y_i\mid T_i=0] \\
+  ATE = & \Er[Y_i\mid D_i=1] - E[Y_i\mid D_i=0] \\
   = & (\beta_0 + \beta_1*1)-(\beta_0 + \beta_1 * 0) \\
    = & \beta_1
    \end{align*}

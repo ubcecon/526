@@ -9,6 +9,8 @@ bibliography: 526.bib
 1. [Introduction to Causality](causality_intro.qmd), [notebook](causality_intro.ipynb)
    - Reading: [Chapter 2](https://chapters.causalml-book.org/CausalML_chap_2.pdf) of @causalml2024 or [Chapter 1](https://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html) of @facure2022
 
+2. [Overview of Causal Inference Methods](methods_overview.qmd)
+
 2. [Uncertainty Quantification](uncertainty.qmd), [notebook](uncertainty.ipynb)
    - [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html.html) of @facure2022
 
@@ -32,18 +34,16 @@ bibliography: 526.bib
 9. [Instrumental Variables](iv.qmd), [notebook](iv.ipynb)
    - Reading: [Chapter 8 and 9](https://matheusfacure.github.io/python-causality-handbook/08-Instrumental-Variables.html) of @facure2022
 
-
 8. [Synthetic Control](syntheticcontrol.qmd), [notebook](syntheticcontrol.ipynb)
    - Reading: @abadie2021,[chapter 15](https://matheusfacure.github.io/python-causality-handbook/15-Synthetic-Control.html) of @facure2022
 
+13. [Regression discontinuity](rdd.qmd), [notebook](rdd.ipynb)
 
 10. [Debiased Machine Learning](doubleml.qmd), [notebook](doubleml.ipynb)
    - Reading: [QuantEcon: ML in Economics](https://datascience.quantecon.org/applications/ml_in_economics.html#estimation-of-nuisance-functions)
 
 11. [Treatment Heterogeneity and Conditional Effects](conditionaleffect.qmd), [notebook](conditionaleffect.ipynb)
    - Reading: [QuantEcon: Heterogeneity](https://datascience.quantecon.org/applications/heterogeneity.html)
-
-13. [Regression discontinuity](rdd.qmd), [notebook](rdd.ipynb)
 
 12. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
    - Reading: [QuantEcon Datascience: Regression - Neural Networks](https://datascience.quantecon.org/tools/regression.html#neural-networks)
