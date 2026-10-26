@@ -31,10 +31,10 @@ bibliography: 526.bib
 ## Setting
 
 - Potential outcomes $(Y(0), Y(1))$
-- Treatment $T \in \{0,1\}$
-- Observe $Y = Y(T)$
+- Treatment $D \in \{0,1\}$
+- Observe $Y = Y(D)$
 - Covariates $X$
-- Assume conditional independence $(Y(0),Y(1)) \perp T | X$
+- Assume conditional independence $(Y(0),Y(1)) \perp D | X$
 
 $$
 \def\Er{{\mathrm{E}}}
@@ -55,9 +55,9 @@ $$
 
 - Average treatment effect
 $$
-ATE = \int \Er[Y|T=1,X=x] - \Er[Y|T=0,X=x] dP(x)
+ATE = \int \Er[Y|D=1,X=x] - \Er[Y|D=0,X=x] dP(x)
 $$
-- Regression gives the best linear approximation to $\Er[Y|T,X]$, so why not just estimate linear regression
+- Regression gives the best linear approximation to $\Er[Y|D,X]$, so why not just estimate linear regression
 $$
 Y_i = \hat{\alpha} D_i + X_i'\hat{\beta} + \hat{\epsilon}_i
 $$
@@ -68,21 +68,21 @@ and, and then use $\hat{\alpha}$ as an estimate of the ATE?
 - Partial out (Frish-Waugh-Lovell theorem)
 $$
 \begin{align*}
-\hat{\alpha} = & \frac{\frac{1}{n} \sum_{i=1}^n Y_i (D_i - X_i'(X'X)^{-1}X'T)}
-    {\frac{1}{n} \sum_{i=1}^n (D_i - X_i'(X'X)^{-1}X'T)^2} \\
+\hat{\alpha} = & \frac{\frac{1}{n} \sum_{i=1}^n Y_i (D_i - X_i'(X'X)^{-1}X'D)}
+    {\frac{1}{n} \sum_{i=1}^n (D_i - X_i'(X'X)^{-1}X'D)^2} \\
     \inprob & \Er\left[Y_i \underbrace{\frac{D_i - X_i'\pi}{\Er[(D_i - X_i'\pi)^2]}}_{\equiv \omega(D_i,X_i)}\right] \\
     = & \Er\left[Y_{0,i} \omega(D_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(D_i,X_i)D_i\right]
 \end{align*}
 $$
 where $\pi = \argmin_{\tilde{\pi}} \Er[(D_i - X_i'\tilde{\pi})^2]$
 
-- Note: $\Er[\omega(T,X)] = 0$, $\Er[T\omega(T,X)] = 1$
+- Note: $\Er[\omega(D,X)] = 0$, $\Er[D\omega(D,X)] = 1$
 
 ## Why not regression?
 
 - $\plim \hat{\alpha} = \Er\left[Y_{0,i} \omega(D_i,X_i)\right] + \Er\left[(Y_{1,i}-Y_{0,i}) \omega(D_i,X_i)D_i\right]$
 
-- What can be in the range of $\omega(T,X) = \frac{T - X'\pi}{\Er[(D_i - X_i'\pi)^2]}$?
+- What can be in the range of $\omega(D,X) = \frac{D - X'\pi}{\Er[(D_i - X_i'\pi)^2]}$?
 
 ## Why not regression?
 
@@ -103,15 +103,15 @@ def simulate(n, pi=np.array([0,1])):
     X = np.random.randn(n, len(pi))
     X[:,0] = 1
     P = np.clip(scipy.stats.norm.cdf(X @ pi), 0.05, 0.95)
-    T = 1*(np.random.rand(n) < P)
+    D = 1*(np.random.rand(n) < P)
     Ey0x = np.zeros(n)
     Ey1x = np.exp(3*(X[:,1]-2))
     y0 = Ey0x + np.random.randn(n)
     y1 = Ey1x + np.random.randn(n)
-    y = T*y1 + (1-T)*y0
-    return(X,T,y,y0,y1, Ey0x, Ey1x, P)
+    y = D*y1 + (1-D)*y0
+    return(X,D,y,y0,y1, Ey0x, Ey1x, P)
 
-X,T,y,y0,y1,Ey0x,Ey1x,P = simulate(4000)
+X,D,y,y0,y1,Ey0x,Ey1x,P = simulate(4000)
 
 pihat = np.linalg.solve(X.T @ X, X.T @ T)
 w = T - X @ pihat
@@ -121,8 +121,8 @@ w = w/np.mean(w**2);
 ## Why not regression?
 
 ```{python}
-TX = np.hstack((T.reshape(len(T),1),X))
-abhat = np.linalg.solve(TX.T @ TX, TX.T @ y)
+DX = np.hstack((D.reshape(len(D),1),X))
+abhat = np.linalg.solve(DX.T @ DX, DX.T @ y)
 ahat = abhat[0]
 print(ahat)
 ```
@@ -131,7 +131,7 @@ print(ahat)
 np.mean(y1-y0)
 ```
 
-- Weights, $\omega(T,X)$, are not all positive, so the regression estimate can be negative even if $\Er[Y(1) | X] - \Er[Y(0)|X]$ is positive everywhere
+- Weights, $\omega(D,X)$, are not all positive, so the regression estimate can be negative even if $\Er[Y(1) | X] - \Er[Y(0)|X]$ is positive everywhere
 
 ## Why not regression?
 
@@ -142,9 +142,9 @@ import matplotlib.cm as cm
 fig, axes = plt.subplots(2, 1, figsize=(6, 6))
 
 # Create a scatter plot for the first panel (left)
-axes[0].scatter(X[:,1], w, c=T, cmap=cm.Dark2)
+axes[0].scatter(X[:,1], w, c=D, cmap=cm.Dark2)
 axes[0].set_xlabel("X")
-axes[0].set_ylabel("ωT")
+axes[0].set_ylabel("ωD")
 axes[0].set_title("Weights")
 
 axes[1].scatter(X[:,1], y1-y0, label="TE")
@@ -165,31 +165,31 @@ plt.show()
 
 - If not regression, then what?
 $$
-ATE = \int \Er[Y|T=1,X=x] - \Er[Y|T=0,X=x] dP(x)
+ATE = \int \Er[Y|D=1,X=x] - \Er[Y|D=0,X=x] dP(x)
 $$
 
 ## Plug-in estimator
 
 - Plug in estimator:
 $$
-\widehat{ATE} = \frac{1}{n} \sum_{i=1}^n \left(\hat{E}[Y|T=1,X=X_i] - \hat{E}[Y|T=0,X=X_i] \right)
+\widehat{ATE} = \frac{1}{n} \sum_{i=1}^n \left(\hat{E}[Y|D=1,X=X_i] - \hat{E}[Y|D=0,X=X_i] \right)
 $$
-where $\hat{E}[Y|T,X]$ is some flexible estimator for $\Er[Y|T,X]$
+where $\hat{E}[Y|D,X]$ is some flexible estimator for $\Er[Y|D,X]$
    - if $X$ is discrete, $\hat{E}$ can be conditional averages or equivalently, "saturated" regression
    - if $X$ continuous, $\hat{E}$ can be some nonparametric regression estimator
-   - Original approaches to this problem used nearest neighbor matching to estimate $\hat{E}[Y|T,X]$
+   - Original approaches to this problem used nearest neighbor matching to estimate $\hat{E}[Y|D,X]$
 
 - Downside:
    - Difficult statistical properties --- choice of tuning parameters, strong assumptions needed, failure of bootstrap for nearest neighbors @abadie2008
 
 ## Propensity Score
 
-- Let $p(X) = P(T=1|X=X)$
+- Let $p(X) = P(D=1|X=X)$
 - Note:
 $$
 \begin{align*}
-\Er[Y|X,T=1] - \Er[Y|X,T=0] = & E\left[\frac{Y T}{p(X)}|X \right] - E\left[\frac{Y(1-T)}{1-p(X)}|X \right] \\
-= & E\left[ Y \frac{T - p(X)}{p(X)(1-p(X))} | X \right]
+\Er[Y|X,D=1] - \Er[Y|X,D=0] = & E\left[\frac{Y D}{p(X)}|X \right] - E\left[\frac{Y(1-D)}{1-p(X)}|X \right] \\
+= & E\left[ Y \frac{D - p(X)}{p(X)(1-p(X))} | X \right]
 \end{align*}
 $$
 
@@ -197,7 +197,7 @@ $$
 
 - so
 $$
-ATE = \Er\left[ \frac{Y T}{p(X)} -  \frac{Y(1-T)}{1-p(X)}\right] = \Er\left[ Y \frac{T - p(X)}{p(X)(1-p(X))} \right]
+ATE = \Er\left[ \frac{Y D}{p(X)} -  \frac{Y(1-D)}{1-p(X)}\right] = \Er\left[ Y \frac{D - p(X)}{p(X)(1-p(X))} \right]
 $$
 
 ## Inverse propensity weighting
@@ -206,7 +206,7 @@ $$
 $$
 \widehat{ATE}^{IPW} = \frac{1}{n} \sum_{i=1}^n \frac{Y_iD_i}{\hat{p}(X_i)} - \frac{Y_i(1-D_i)}{1-\hat{p}(X_i)}
 $$
-where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
+where $\hat{p}(X)$ is some flexible estimator for $P(D=1|X)$
 
 - Downside:
   - Difficult statistical properties --- choice of tuning parameters, strong assumptions needed
@@ -217,25 +217,25 @@ where $\hat{p}(X)$ is some flexible estimator for $P(T=1|X)$
 - Estimator
 $$
 \begin{align*}
-\widehat{ATE}^{DR} = & \frac{1}{n} \sum_{i=1}^n \hat{E}[Y|T=1,X=X_i] - \hat{E}[Y|T=0,X=X_i] + \\
-& + \frac{1}{n} \sum_{i=1}^n  \frac{D_i(Y_i - \hat{E}[Y|T=1,X=X_i])}{\hat{p}(X_i)} - \\
-& - \frac{(1-D_i)(Y_i - \hat{E}[Y|T=0,X=X_i])} {1-\hat{p}(X_i)}
+\widehat{ATE}^{DR} = & \frac{1}{n} \sum_{i=1}^n \hat{E}[Y|D=1,X=X_i] - \hat{E}[Y|D=0,X=X_i] + \\
+& + \frac{1}{n} \sum_{i=1}^n  \frac{D_i(Y_i - \hat{E}[Y|D=1,X=X_i])}{\hat{p}(X_i)} - \\
+& - \frac{(1-D_i)(Y_i - \hat{E}[Y|D=0,X=X_i])} {1-\hat{p}(X_i)}
 \end{align*}
 $$
 
 ## Doubly Robust Estimator
 
 - Doubly robust in that:
-  - Consistent as long as either $\hat{p}(X) \inprob p(X)$ or $\hat{E}[Y|T,X] \inprob \Er[Y|T,X]$
-  - Insensitive to small changes in $\hat{p}(X)$ or $\hat{E}[Y|T,X]$
+  - Consistent as long as either $\hat{p}(X) \inprob p(X)$ or $\hat{E}[Y|D,X] \inprob \Er[Y|D,X]$
+  - Insensitive to small changes in $\hat{p}(X)$ or $\hat{E}[Y|D,X]$
 
 - Allows nicer statistical properties
   - Weaker assumptions needed
-  - Asymptotic distribution is the same as if $p(X)$ and $\Er[Y|T,X]$ were known
+  - Asymptotic distribution is the same as if $p(X)$ and $\Er[Y|D,X]$ were known
 
 ## Software
 
-- Advice: use the doubly robust estimator with nonparametric estimates for $\hat{E}[Y|T,X]$ and $\hat{p}(X)$
+- Advice: use the doubly robust estimator with nonparametric estimates for $\hat{E}[Y|D,X]$ and $\hat{p}(X)$
 - Recommended package:
     - [doubleml](https://docs.doubleml.org/stable/guide/models.html#interactive-regression-models-irm)
 
@@ -340,7 +340,7 @@ models = [
     GradientBoostingClassifier(learning_rate=0.1)]
 for m in models :
     print(m)
-    print(f"cross val log likelihood {cross_val_score(m, X, T, scoring='neg_log_loss', cv=5).mean():.4} \n\n")
+    print(f"cross val log likelihood {cross_val_score(m, X, D, scoring='neg_log_loss', cv=5).mean():.4} \n\n")
 
 ```
 
@@ -358,7 +358,7 @@ g = Pipeline([('poly',PolynomialFeatures(degree=10)),
 m = Pipeline([('rbf',RBFSampler(gamma=gamma, random_state=1, n_components=nc)),
               ('logistic',LogisticRegressionCV(n_jobs=-1, scoring='neg_log_loss'))])
 
-m.fit(X,T)
+m.fit(X,D)
 
 def plotp(model,X,d):
     fig,ax=plt.subplots()
@@ -370,13 +370,13 @@ def plotp(model,X,d):
     ax.set_title('P(T|x)')
     return(fig)
 
-fig=plotp(m, X, T)
+fig=plotp(m, X, D)
 ```
 
 ## Example: Results
 
 ```{python}
-dmldata = dml.DoubleMLData.from_arrays(X, y, T)
+dmldata = dml.DoubleMLData.from_arrays(X, y, D)
 dmlATE = dml.DoubleMLAPOS(dmldata, g, m, treatment_levels=[0, 1])
 dmlATE.fit()
 dmlATE.summary
@@ -387,7 +387,7 @@ dmlATE.causal_contrast(0).summary
 ```
 
 ```{python}
-aipw = Ey1x - Ey0x + T*(y - Ey1x)/P - (1-T)*(y - Ey0x)/(1-P)
+aipw = Ey1x - Ey0x + D*(y - Ey1x)/P - (1-D)*(y - Ey0x)/(1-P)
 se = np.sqrt(np.var(aipw)/len(aipw))
 print(f"Infeasible estimator with true E[y1-y0|x] = and p(x) {np.mean(aipw):.2} with 95% CI = [{np.mean(aipw)-1.96*se:.2},{np.mean(aipw)+1.96*se:.2}]\n")
 ```
@@ -504,9 +504,9 @@ data_with_categ = pd.concat([
 ], axis=1)
 
 print(data_with_categ.shape)
-T = 'intervention'
+D = 'intervention'
 Y = 'achievement_score'
-X = data_with_categ.columns.drop(['schoolid', T, Y])
+X = data_with_categ.columns.drop(['schoolid', D, Y])
 ```
 
 ## Propensity Score Matching
@@ -516,16 +516,16 @@ from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.neighbors import KNeighborsRegressor
 import sklearn
 
-def propensitymatching(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
-    pfit = psmodel.fit(X,T)
+def propensitymatching(D,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),neighbormodel=KNeighborsRegressor(n_neighbors=1,algorithm='auto',weights='uniform')):
+    pfit = psmodel.fit(X,D)
     ps = pfit.predict_proba(X)[:,1]
-    ey1 = neighbormodel.fit(ps[T==1].reshape(-1,1),Y[T==1])
-    ey0 = sklearn.base.clone(neighbormodel).fit(ps[T==0].reshape(-1,1),Y[T==0])
+    ey1 = neighbormodel.fit(ps[D==1].reshape(-1,1),Y[D==1])
+    ey0 = sklearn.base.clone(neighbormodel).fit(ps[D==0].reshape(-1,1),Y[D==0])
     tex = ey1.predict(ps.reshape(-1,1)) - ey0.predict(ps.reshape(-1,1))
     ate = np.mean(tex)
     return(ate, tex,ps)
 
-ate,tex,ps=propensitymatching(data_with_categ[T],data_with_categ[Y],data_with_categ[X])
+ate,tex,ps=propensitymatching(data_with_categ[D],data_with_categ[Y],data_with_categ[X])
 print(ate)
 ```
 ## Propensity Score Matching
@@ -540,7 +540,7 @@ ax[1].hist(ps[treat==0],bins=20,color="C2",label="Untreated")
 ax[1].hist(ps[treat==1],bins=20,color="C3",label="Treated")
 ax[1].set_xlabel("P(Treatment)")
 ax[1].set_ylabel("N")
-ax[0].set_ylabel("E[Y|T=1,P(X)] - E[Y|T=0,P(X)]")
+ax[0].set_ylabel("E[Y|D=1,P(X)] - E[Y|D=0,P(X)]")
 plt.legend()
 plt.show()
 ```
@@ -548,13 +548,13 @@ plt.show()
 ## Inverse Propensity Weighting
 
 ```{python}
-def ipw(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss')):
-    pfit = psmodel.fit(X,T)
+def ipw(D,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss')):
+    pfit = psmodel.fit(X,D)
     ps = pfit.predict_proba(X)[:,1]
-    ate=np.mean(Y*(T - ps)/(ps*(1-ps)))
+    ate=np.mean(Y*(D - ps)/(ps*(1-ps)))
     return(ate,ps)
 
-ate,ps = ipw(data_with_categ[T],data_with_categ[Y],data_with_categ[X])
+ate,ps = ipw(data_with_categ[D],data_with_categ[Y],data_with_categ[X])
 print(ate)
 ```
 
@@ -565,14 +565,14 @@ from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifi
 from sklearn.linear_model import LassoCV, LogisticRegressionCV, ElasticNetCV
 from sklearn.preprocessing import PolynomialFeatures
 
-def robustate(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),ymodel=LassoCV(), cluster=None):
-    pfit = psmodel.fit(X,T)
+def robustate(D,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),ymodel=LassoCV(), cluster=None):
+    pfit = psmodel.fit(X,D)
     ps = pfit.predict_proba(X)[:,1]
-    ey1fit = ymodel.fit(X[T==1],Y[T==1])
-    ey0fit = sklearn.base.clone(ymodel).fit(X[T==0],Y[T==0])
+    ey1fit = ymodel.fit(X[D==1],Y[D==1])
+    ey0fit = sklearn.base.clone(ymodel).fit(X[D==0],Y[D==0])
     ey1 = ey1fit.predict(X)
     ey0 = ey0fit.predict(X)
-    ate_terms = ey1 - ey0 + T*(Y- ey1)/ps - (1-T)*(Y-ey0)/(1-ps)
+    ate_terms = ey1 - ey0 + D*(Y- ey1)/ps - (1-D)*(Y-ey0)/(1-ps)
     ate = np.mean(ate_terms)
     # check if cluster is None
     if cluster is None :
@@ -583,7 +583,7 @@ def robustate(T,Y,X,psmodel=LogisticRegressionCV(scoring='neg_log_loss'),ymodel=
 
     return(ate, ate_se, ps, ey1,ey0)
 
-ate,se,ps,ey1,ey0 = robustate(data_with_categ[T],data_with_categ[Y],data_with_categ[X],cluster=data_with_categ['schoolid'])
+ate,se,ps,ey1,ey0 = robustate(data_with_categ[D],data_with_categ[Y],data_with_categ[X],cluster=data_with_categ['schoolid'])
 print(ate-1.96*se, ate, ate+1.96*se)
 ```
 
@@ -598,7 +598,7 @@ import doubleml as dml
 
 m = LassoCV()
 g = LogisticRegressionCV(scoring='neg_log_loss')
-dmldata = dml.DoubleMLData(data_with_categ, Y,T,X.to_list())
+dmldata = dml.DoubleMLData(data_with_categ, Y,D,X.to_list())
 dmlATE = dml.DoubleMLAPOS(dmldata, m, g, treatment_levels=[0, 1])
 dmlATE.fit()
 dmlATE.summary

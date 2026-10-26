@@ -127,7 +127,7 @@ print(f"OLS SE: {olsse}, manual SE: {ate[1]}")
 
 - Default of `smf.ols` assumes homoskedasticiy $\Er[\epsilon^2|X] = \sigma^2$
 
-- With $y$ and $T$, binary, $\Er[\epsilon^2|T] = P(y=1|T)(1-P(y=1|T))$
+- With $y$ and $D$, binary, $\var(y|D) = \Er[\epsilon^2|D] = P(y=1|D)(1-P(y=1|D))$
 
 ```{python}
 olshcse = np.sqrt(np.diag(smf.ols('infected ~ treat',data=data.loc[data['over65']==1]).fit(cov_type="HC3").cov_params())[1])
@@ -305,7 +305,7 @@ allcon.summary()
 
 ## Regression for RCTs
 
-- RCT with outcome $Y$, treatment $T$, other variables $X$
+- RCT with outcome $Y$, treatment $D$, other variables $X$
 
 - Should we estimate ATE in a regression that includes $X$?
 
@@ -344,15 +344,15 @@ minteract=smf.ols('Y ~ D + Z*D',data=data).fit(cov_type=hc)
 summary_col([m1, madd, minteract],model_names=['simple','additive','interactive'])
 ```
 
-## If $T \indep X$, Interactive Model Reduces Variance
+## If $D \indep X$, Interactive Model Reduces Variance
 
-- Assume $T \indep (X, Y(0), Y(1))$, $T \in \{0,1\}$, $\Er[X] = 0$
+- Assume $D \indep (X, Y(0), Y(1))$, $D \in \{0,1\}$, $\Er[X] = 0$
 - Consider
 $$
 \begin{align*}
-Y & = \beta_0^s + \beta_1^s T + \epsilon^s \\
-Y & = \beta_0^a + \beta_1^a T + X'\gamma^a_0 + \epsilon^a \\
-Y & = \beta_0^i + \beta_1^i T + X'\gamma^i_0 + TX'\gamma^i_1 + \epsilon^s
+Y & = \beta_0^s + \beta_1^s D + \epsilon^s \\
+Y & = \beta_0^a + \beta_1^a D + X'\gamma^a_0 + \epsilon^a \\
+Y & = \beta_0^i + \beta_1^i D + X'\gamma^i_0 + DX'\gamma^i_1 + \epsilon^s
 \end{align*}
 $$
 - All are consistent
@@ -455,7 +455,7 @@ From chapter 7 of @facure2022
 print(drug.groupby('hospital').mean().to_markdown())
 ```
 
-- Treatment randomly assigned within each hospital, but with very different $P(T=1|\text{hospital})$
+- Treatment randomly assigned within each hospital, but with very different $P(D=1|\text{hospital})$
 
 
 ## Drug Trial at Two Hospitals {.smaller}

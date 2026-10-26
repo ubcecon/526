@@ -386,7 +386,7 @@ lo*1000, hi*1000
 - Often report functions of estimates
   -  E.g.
 $$
-  \text{vaccine efficacy} = 1 - \frac{\Er[Y|T=1]} {\Er[Y|T=0]}
+  \text{vaccine efficacy} = 1 - \frac{\Er[Y|D=1]} {\Er[Y|D=0]}
 $$
 
 ## Delta Method
@@ -405,9 +405,9 @@ Then $\sqrt{n}(g(\hat{\theta}) - g(\theta_0)) \leadsto N\left(0, D(g)(\theta_0) 
 :::
 
 - E.g. vaccine efficacy
-  - $\theta_0 = (\Er[Y|T=0], \Er[Y|t=1])$
+  - $\theta_0 = (\Er[Y|D=0], \Er[Y|D=1])$
   - $g(\theta) = 1 - \theta_2/\theta_1$
-  - $D(g)(\theta_0) = \begin{pmatrix} \frac{\Er[Y|T=1]}{\Er[Y|T=0]^2} & -\frac{1}{\Er[Y|T=0]} \end{pmatrix}$
+  - $D(g)(\theta_0) = \begin{pmatrix} \frac{\Er[Y|D=1]}{\Er[Y|D=0]^2} & -\frac{1}{\Er[Y|D=0]} \end{pmatrix}$
   - $\Omega = \begin{pmatrix} p_0(1-p_0)/n_0 & 0 \\ 0 & p_1(1-p_1)/n_1 \end{pmatrix}$
 
 ## Delta Method

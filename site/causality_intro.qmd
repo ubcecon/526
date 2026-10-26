@@ -56,7 +56,7 @@ $$
 
 - Treatment $D_i \in \{0,1\}$
 - Observed outcome $Y_i$
-- We want the causal effect of $T$ on $Y$, but what does that mean?
+- We want the causal effect of $D$ on $Y$, but what does that mean?
   - Potential outcomes give a rigorous definition
 :::
 
@@ -156,11 +156,11 @@ class selectiondata:
         self.Y1 = np.random.normal(size=n) + ate
         self.S0 = self.Y0 + np.random.normal(size=n)*noisesd
         self.S1 = self.Y1 + np.random.normal(size=n)*noisesd
-        self.T = (self.S1 > self.S0).astype(int)
-        self.Y = self.Y0 * (1 - self.T) + self.Y1 * self.T
+        self.D = (self.S1 > self.S0).astype(int)
+        self.Y = self.Y0 * (1 - self.D) + self.Y1 * self.D
 
     def APE(self):
-        return np.mean(self.Y[self.T==1]) - np.mean(self.Y[self.T==0])
+        return np.mean(self.Y[self.D==1]) - np.mean(self.Y[self.D==0])
 
     def ATE(self):
         return np.mean(self.Y1) - np.mean(self.Y0)
@@ -169,10 +169,10 @@ class selectiondata:
         return (self.APE() - self.ATE())
 
     def selectionbias0(self):
-        return np.mean( self.Y0[self.T==1]) - np.mean( self.Y0[self.T==0] )
+        return np.mean( self.Y0[self.D==1]) - np.mean( self.Y0[self.D==0] )
 
     def selectionbias1(self):
-        return np.mean( self.Y1[self.T==1]) - np.mean(self.Y1[self.T==0] )
+        return np.mean( self.Y1[self.D==1]) - np.mean(self.Y1[self.D==0] )
 
 
 s = 0.5
