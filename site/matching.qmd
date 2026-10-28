@@ -113,8 +113,8 @@ def simulate(n, pi=np.array([0,1])):
 
 X,D,y,y0,y1,Ey0x,Ey1x,P = simulate(4000)
 
-pihat = np.linalg.solve(X.T @ X, X.T @ T)
-w = T - X @ pihat
+pihat = np.linalg.solve(X.T @ X, X.T @ D)
+w = D - X @ pihat
 w = w/np.mean(w**2);
 ```
 
@@ -259,7 +259,7 @@ print(f"Infeasible estimator with potential outcomes observed = {ate:.2} with 95
 - Infeasible estimator: doubly robust with true $\Er[Y(T)|X]$ and $p(X)$
 
 ```{python}
-aipw = Ey1x - Ey0x + T*(y - Ey1x)/P - (1-T)*(y - Ey0x)/(1-P)
+aipw = Ey1x - Ey0x + D*(y - Ey1x)/P - (1-D)*(y - Ey0x)/(1-P)
 se = np.sqrt(np.var(aipw)/len(aipw))
 print(f"Infeasible estimator with true E[y1-y0|x] = and p(x) {np.mean(aipw):.2} with 95% CI = [{np.mean(aipw)-1.96*se:.2},{np.mean(aipw)+1.96*se:.2}]\n")
 ```

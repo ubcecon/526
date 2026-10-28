@@ -241,15 +241,21 @@ plt.show()
 
 - **The district expands tutoring in some schools this year, but not in others.** Compare graduation rates before and after the expansion:
 
+  - Potential outcomes $Y_{it}(d)$
+    - Making these only depend on current $d$ implies (i) no anticipation (ii) no spillovers
+  - Observe $Y_{it} = Y_{it}(D_{it})$
+
+Observed Outcomes
 |  | Before | After |
 |---|---:|---:|
-| Expansion schools | $Y_0(1)$ | $Y_1(1)$ |
-| Other schools | $Y_0(0)$ | $Y_1(0)$ |
+| Expansion schools | $Y_{i0}(0)$ | $Y_{i1}(1)$ |
+| Other schools | $Y_{j0}(0)$ | $Y_{j1}(0)$ |
 
 - Difference in difference:
+
 $$
-\underbrace{(Y_1(1)-Y_0(0))}_{\text{treated city's change}}
--\underbrace{(Y_1(1)-Y_0(0))}_{\text{comparison city's change}}
+\underbrace{(Y_{i1}(1)-Y_{i0}(0))}_{\text{treated school's change}}
+-\underbrace{(Y_{j1}(1)-Y_{j0}(0))}_{\text{comparison school's change}}
 $$
 
 - The other schools' change stands in for expansion schools' missing no-tutoring-expansion trend.
@@ -260,7 +266,14 @@ $$
 ::: {.callout-note}
 **Key assumption: parallel trends.** Without the expansion, graduation rates in the two sets of schools would have changed similarly.
 $$
-\underbrace{\Er[Y_1(0) - Y_0(0) | D=1]}_{\text{unobserved}} = \underbrace{\Er[Y_1(0) - Y_0(0) | D=0]}_{\text{observed}}
+\underbrace{\Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1]}_{\text{\textcolor{red}{unobserved}}} = \underbrace{\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]}_{\text{observed}}
+$$
+- Implies:
+$$
+\begin{align*}
+\text{DiD} = & \Er[Y_{i1}(1) - Y_{i0}(0) | D_{i1}=1] - \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0] \\
+= & \Er[Y_{i1}(1) - Y_{i0}(0) | D_{i1}=1] - \Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1] \\
+= & \Er[Y_{i1}(1) - \textcolor{red}{Y_{i1}(0)} | D_{i1}=1] = \text{ATT}
 $$
 
 :::
@@ -288,6 +301,23 @@ ax.legend()
 plt.tight_layout()
 plt.show()
 ```
+
+## Assessing Parallel Trends
+
+- Thinking about how treatment was assigned helps assess plausibility of parallel trends
+- Self-selection into treatment can be problematic
+  - E.g. if schools expanded tutoring because teachers noticed that students were increasingly struggling and the teachers expected graduation rates to fall
+      - $\Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]$
+      - Might show up in pre-treatment trends, if observe $t=-1$, can check whether
+       $$
+       \Er[Y_{i,0}(0) - Y_{i,-1}(0) | D_{i1}=1] = \Er[Y_{i,0}(0) - Y_{i,-1}(0) | D_{i1}=0]$
+       $$
+- Conditioning can sometimes help
+   - Conditional parallel trends
+   $$
+   \Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1, X_i] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0, X_i]
+   $$
+
 
 
 ## Synthetic control: build a comparison district
@@ -339,7 +369,12 @@ plt.show()
 
 - Synthetic Control:
    - best for one or few treated units, many untreated units, many pre-treatment periods
-   - Assumption: convex combination of untreated units resembles treat unit
+   - Assumption: convex combination of untreated units resembles treated unit
+     - Valid if untreated potential outcome follows a factor model
+     $$
+     Y_{it}(0) = X_{it}' \beta + \underbrace{\lambda_i'
+       \theta_t}_{\text{unobserved interactive effects (or factors)}} + \epsilon_{it}
+     $$
 
 :::
 
@@ -361,11 +396,18 @@ Return to the tutoring lottery: some students offered a place do not attend, whi
 
 **Lottery offer** $\longrightarrow$ **tutoring attendance** $\longrightarrow$ **graduation**
 
-- The offer can instrument for attendance if it changes participation.
+- The offer, $Z_i$, can instrument for attendance if it changes participation.
+$$ \cov(Z_i,D_i) \neq 0 $$
 - The offer must be unrelated to other causes of graduation.
+$$
+Z_i \indep Y(0), Y(1), D(z)
+$$
 - It must affect graduation through tutoring, not through another channel.
+  - Potential outcomes are $Y(D(Z))$, not $Y(D,Z)$.
 
-Under additional assumptions, IV estimates an effect for students whose tutoring attendance responds to the offer—not necessarily for everyone.
+IV estimates an effect for students whose tutoring attendance responds to the offer—not necessarily for everyone.
+
+
 
 ## IV
 
@@ -426,6 +468,9 @@ plt.show()
 
 Students very close to the cutoff may be similar. If graduation rates would otherwise change smoothly around 60, a jump in graduation identifies the effect of **eligibility**. If eligibility affects graduation only by changing tutoring attendance, the cutoff can also identify a local effect of tutoring for students whose attendance it changes.
 
+
+- Assumption: continuity of $\Er[Y(1)|R=r]$ and $\Er[Y(0)|R=r]$
+
 :::
 
 :::
@@ -469,18 +514,6 @@ plt.show()
 
 # Flexible Estimation and Effects
 
-## Machine learning can help estimate—not identify
-
-Want to estimate tutoring effects while accounting for many student characteristics?
-
-- Flexible models can predict outcomes and treatment using covariates.
-- Debiased machine learning combines these predictions to estimate an effect while limiting overfitting bias.
-- Cross-fitting separates model training from effect estimation.
-
-::: {.callout-warning}
-DML does not make unmeasured confounding disappear. It still needs identifying assumptions, such as conditional exchangeability or a valid instrument.
-:::
-
 ## Does tutoring help everyone equally?
 
 An average effect can hide important differences:
@@ -504,6 +537,8 @@ Can the method identify effects for those groups? Were the groups chosen before 
 :::
 
 :::
+
+- I.e. interested in conditional treatment effects, $\Er[Y(1) - Y(0) | X]$
 
 - Searching many subgroups can produce impressive-looking patterns by chance. Treat discovered heterogeneity skeptically.
 
@@ -576,6 +611,13 @@ ax.text(0.01, -0.12,
 fig.tight_layout(rect=[0.28, 0.16, 1, 1])
 plt.show()
 ```
+
+## Distribution Effects
+
+- Instead of (conditional) average effects, we can look at changes in distribution
+  - Distribution functions: $F_{Y(1)}(y) - F_{Y(0)}(y)$
+  - Quantiles: $Q_{\tau}(Y(1)) - Q_{\tau}(Y(0))$
+
 
 # Project Proposal
 

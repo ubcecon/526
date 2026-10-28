@@ -41,7 +41,7 @@ check-uncommitted:
 
 deploy: check-uncommitted all
 	MSG=$$(git log -1 --pretty=%B); \
-	cd $(OUTDIR) || exit 1; git add *; git commit -a -m "Update to Paul's slides: $$MSG"; git push origin main_2025
+	cd $(OUTDIR) || exit 1; git add *; git commit -a -m "Update to Paul's slides: $$MSG"; git push origin main_2026
 #commit -a -m "Automated updates to slides."; git push origin main_2024
 
 data: site/data/learning_mindset.csv \
