@@ -9,6 +9,7 @@ format:
   revealjs:
     min-scale: 0.1
     smaller: true
+    code-fold: true
     toc: true
     toc-depth: 1
     progress: true
@@ -22,7 +23,6 @@ format:
           data-background-size: contain
 execute:
   cache: true
-  code-fold: true
 bibliography: 526.bib
 ---
 
@@ -103,9 +103,9 @@ Every method below proposes a different way to build that counterfactual.
 | Experiment | randomly assigned groups | assignment breaks selection |
 | Regression / matching | similar observed students | adjust for observed differences |
 | Difference in differences | changes over time | comparison group captures the trend |
-| Synthetic control | treated place vs weighted donor places | match the pre-treatment path |
+| Synthetic control | treated place vs. weighted donor places | match the pre-treatment path |
 | Instrumental variables | treatment shifted by an instrument | isolate a plausibly external nudge |
-| Regression discontinuity | units just either side of a cutoff | near-cutoff units are comparable |
+| Regression discontinuity | units just on either side of a cutoff | near-cutoff units are comparable |
 
 Each method relies on assumptions that make its comparison informative about a causal effect. The available data and institutional setting determine what method to use.
 
@@ -145,7 +145,7 @@ for other eligible students
 
 - Because the offer was random, there is no selection bias and the two groups provide a comparison for each other.
 $$
-Y(1), Y(0) | D \, \Rightarrow\, \Er[Y(1) | D = 1] - \Er[Y(0) | D = 0] = \Er[Y(1) - Y(0)]
+Y(1), Y(0) \indep D \, \Rightarrow\, \Er[Y(1) | D = 1] - \Er[Y(0) | D = 0] = \Er[Y(1) - Y(0)]
 $$
 
 - The graduation-rate gap estimates the effect of being offered tutoring.
@@ -175,7 +175,7 @@ plt.show()
 ```
 
 ::: {.callout-note}
-Randomization helps with selection into an offer. It does not eliminate concerns like attrition, noncompliance, or whether results apply to students in other districts.
+Randomization eliminates selection into who receives the offer. It does not eliminate concerns like attrition, noncompliance, or whether results apply to students in other districts.
 :::
 
 ## Regression and matching: make like-with-like comparisons
@@ -185,7 +185,7 @@ Randomization helps with selection into an offer. It does not eliminate concerns
 - Tutored students often had lower grades before tutoring.
 
 - **Compare students with similar prior grades and backgrounds**
-  —using regression adjustment or matching.
+  — using regression adjustment or matching.
 
 
 - **Identification assumption:** conditional on observed characteristics, tutoring is as good as randomly assigned.
@@ -197,7 +197,7 @@ $$
 
 ::: {.fragment}
 
-- All relevant differences should be measured, or there could be selection conditional on covariates
+- All relevant differences should be measured; otherwise, selection on unobserved factors remains even after conditioning on covariates
   - Motivation, family support, or a teacher's private assessment may still affect both tutoring and graduation.
 
 :::
@@ -245,21 +245,21 @@ plt.show()
 - **The district expands tutoring in some schools this year, but not in others.** Compare graduation rates before and after the expansion:
 
   - Potential outcomes $Y_{it}(d)$
-    - Making these only depend on current $d$ implies (i) no anticipation (ii) no spillovers
+    - Making these only depend on current $d$ implies (i) no anticipation and (ii) no spillovers
   - Observe $Y_{it} = Y_{it}(D_{it})$
 
-Observed Outcomes
+**Observed outcomes**
 
 |  | Before | After |
 |---|---:|---:|
 | Expansion schools | $Y_{i0}(0)$ | $Y_{i1}(1)$ |
 | Other schools | $Y_{j0}(0)$ | $Y_{j1}(0)$ |
 
-- Difference in difference:
+- Difference in differences:
 
 $$
 \underbrace{(Y_{i1}(1)-Y_{i0}(0))}_{\text{treated school's change}}
--\underbrace{(Y_{j1}(1)-Y_{j0}(0))}_{\text{comparison school's change}}
+-\underbrace{(Y_{j1}(0)-Y_{j0}(0))}_{\text{comparison school's change}}
 $$
 
 ## Difference in differences
@@ -281,7 +281,7 @@ $$
 
 :::
 
-## Event Study
+## Event study
 
 ```{python}
 period = np.arange(-3, 4)
@@ -307,11 +307,11 @@ plt.tight_layout()
 plt.show()
 ```
 
-## Assessing Parallel Trends
+## Assessing parallel trends
 
-- Thinking about how treatment was assigned helps assess plausibility of parallel trends
+- Thinking about how treatment was assigned helps assess the plausibility of parallel trends
 - Self-selection into treatment can be problematic
-  - E.g. if schools expanded tutoring because teachers noticed that students were increasingly struggling and the teachers expected graduation rates to fall
+  - e.g., if schools expanded tutoring because teachers noticed that students were increasingly struggling and expected graduation rates to fall
       - $\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]$
       - Might show up in pre-treatment trends, if observe $t=-1$, can check whether
        $$
@@ -319,9 +319,9 @@ plt.show()
        $$
 - Conditioning can sometimes help
    - Conditional parallel trends
-   $$
-   \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1, X_i] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0, X_i]
-   $$
+     $$
+     \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1, X_i] = \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0, X_i]
+     $$
 
 
 
@@ -335,7 +335,7 @@ Suppose one district introduces a tutoring program across all its schools at onc
 2. Compare its post-program path with this "synthetic district."
 3. Treat the post-program gap as an estimated effect—if donor districts provide a credible counterfactual.
 
-## Synthetic Control
+## Synthetic control
 
 ```{python}
 years = np.arange(-6, 5)
@@ -364,7 +364,7 @@ plt.show()
 ```
 
 
-## Synthetic Control or Difference in Differences?
+## Synthetic control or difference in differences?
 
 - Both need panel data with some units treated, others untreated
 
@@ -469,7 +469,7 @@ Students very close to the cutoff may be similar. If graduation rates would othe
 
 - **Watch for:** students or teachers manipulating scores near the threshold. The estimate is local to students around the cutoff.
 
-## Regression Discontinuity
+## Regression discontinuity
 
 ```{python}
 n = 32_000
@@ -535,9 +535,9 @@ Can the method identify effects for those groups? Were the groups chosen before 
 - Searching many subgroups can produce impressive-looking patterns by chance. Treat discovered heterogeneity skeptically.
 
 
-## Conditional Treatment Effects
+## Conditional treatment effects
 
-Simulate a randomized tutoring study where the true effect is **the same in every group**. Explore 15 categories anyway: some nominal 95% confidence intervals may miss the common effect just by chance.
+Simulate a randomized tutoring study where the true effect is **the same in every group**. Explore 15 categories anyway: some of the nominal 95% confidence intervals may miss the common effect just by chance.
 
 ```{python}
 n = 8000
@@ -604,18 +604,59 @@ fig.tight_layout(rect=[0.28, 0.16, 1, 1])
 plt.show()
 ```
 
-## Distribution Effects
+## Distribution effects
 
-- Instead of (conditional) average effects, we can look at changes in distribution
+- Instead of (conditional) average effects, we can look at changes in the distribution
   - Distribution functions: $F_{Y(1)}(y) - F_{Y(0)}(y)$
   - Quantiles: $Q_{\tau}(Y(1)) - Q_{\tau}(Y(0))$
 
+Simulated potential outcomes, with the effect concentrated at the bottom of the distribution:
+
+```{python}
+n = 20000
+y0 = rng.normal(65, 10, n)
+y1 = 0.75 * y0 + 20 + rng.normal(0, 2, n)
+
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.4))
+
+axes[0].hist(y0, bins=100, density=True, histtype="step", linewidth=2, label="$Y(0)$")
+axes[0].hist(y1, bins=100, density=True, histtype="step", linewidth=2, label="$Y(1)$")
+axes[0].set_title("Density")
+axes[0].set_xlabel("Outcome")
+axes[0].set_ylabel("Density")
+axes[0].legend(frameon=False, loc="upper right")
+
+grid = np.linspace(30, 100, 500)
+F0 = np.searchsorted(np.sort(y0), grid) / n
+F1 = np.searchsorted(np.sort(y1), grid) / n
+axes[1].plot(grid, F0, linewidth=2, label="$F_{Y(0)}$")
+axes[1].plot(grid, F1, linewidth=2, label="$F_{Y(1)}$")
+axes[1].fill_between(grid, F0, F1, alpha=0.15, color="grey")
+axes[1].set_title("Distribution function")
+axes[1].set_xlabel("Outcome")
+axes[1].set_ylabel("$F(y)$")
+axes[1].legend(frameon=False, loc="upper left")
+
+tau = np.linspace(0.01, 0.99, 200)
+Q0 = np.quantile(y0, tau)
+Q1 = np.quantile(y1, tau)
+axes[2].plot(tau, Q0, linewidth=2, label=r"$Q_\tau(Y(0))$")
+axes[2].plot(tau, Q1, linewidth=2, label=r"$Q_\tau(Y(1))$")
+axes[2].fill_between(tau, Q0, Q1, alpha=0.15, color="grey")
+axes[2].set_title("Quantile function")
+axes[2].set_xlabel(r"$\tau$")
+axes[2].set_ylabel(r"$Q_\tau(Y)$")
+axes[2].legend(frameon=False, loc="upper left")
+
+plt.tight_layout()
+plt.show()
+```
 
 # Project Proposal
 
 ## Project proposal — due November 13
 
-Briing a focused causal question
+Bring a focused causal question
 
 ::: {.fragment}
 

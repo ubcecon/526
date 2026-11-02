@@ -111,8 +111,8 @@ print("\n- All\n\n" + pfizerall.table() + "\n - 65+\n\n" + pfizer65.table())
 
 ::: {.column width=50%}
 
-- We see the sample ATE of the Vaccine on infections per 1000 people
-- Sample ATE is random, how confident can we be that it is near the population ATE?
+- The table shows the sample ATE of the vaccine on infections per 1000 people
+- The sample ATE is random: how confident can we be that it is close to the population ATE?
 
 :::
 
@@ -133,7 +133,7 @@ print("\n- All\n\n" + pfizerall.table() + "\n - 65+\n\n" + pfizer65.table())
 - In this example, ATE is difference of two proportions, so
 $$
 \begin{align*}
-    \var(ATE) & = \var(\hat{p}_1 - \hat{p}_0) \\
+    \var(\widehat{ATE}) & = \var(\hat{p}_1 - \hat{p}_0) \\
     & = \var(\hat{p}_1) + \var(\hat{p}_0) \\
     & = \var\left(\frac{1}{N_1} \sum_{i=1}^{N_1} Y_i \right) + \var\left(\frac{1}{N_0} \sum_{i=1}^{N_0} Y_i \right) \\
     & = \frac{1}{N_1} \hat{p}_1(1-\hat{p}_1) + \frac{1}{N_0} \hat{p}_0(1-\hat{p}_0)
@@ -160,6 +160,7 @@ def tablewithse(self, scale=1000):
 binarybinaryrct.table = tablewithse
 
 print(pfizerall.table())
+print(pfizer65.table())
 ```
 :::
 
@@ -169,15 +170,15 @@ print(pfizerall.table())
 
 ## Confidence Intervals
 
-- Function of data constructed such that
+- A function of the data constructed so that
 $$
-P(ATE \in \widehat{CI}_\alpha) \approx \alpha
+P(\widehat{ATE} \in \widehat{CI}_{\alpha}) \approx 1-\alpha
 $$
 - Can create if we know the (approximate) distribution of the data or the estimate
 
 ## Exact Estimator Distribution
 
-- Confidence interval for $P(Y)$ with $Y_i \in \{0,1\}$, i.i.d.
+- Confidence interval for $p = P(Y=1)$ with i.i.d. $Y_i \in \{0,1\}$
 - Given $P(Y)=p$ can calculate or simulate distribution of $\hat{p} = \frac{1}{n} \sum Y_i$
 
 ```{python}
@@ -202,9 +203,9 @@ plt.show()
 
 ## Exact Confidence Interval
 
-- Knowing distribution of $\hat{p}$ given $p$ can compute $P(|\hat{p}-p|\geq |\hat{p}_{obs} - p|)$
+- Knowing the distribution of $\hat{p}$ given $p$, we can compute $P(|\hat{p}-p| \leq |\hat{p}_{obs}-p|)$ for each candidate $p$ and keep the values of $p$ for which it is below $1-\alpha$
 $$
-\widehat{CI}_\alpha(\hat{p}_{obs}) = \{p: P(|\hat{p}-p| \leq |\hat{p}_{obs} - p|) \leq \alpha \}
+\widehat{CI}_{\alpha}(\hat{p}_{obs}) = \{p: P(|\hat{p}-p| \leq |\hat{p}_{obs} - p|) \leq 1-\alpha \}
 $$
 
 ```{python}
@@ -221,7 +222,7 @@ def proportioncisim(phat, n, level=0.95, S=100_000):
     p = phat + dp
     while (abs(np.random.binomial(n,p,S)/n-p) <= abs((phat-p))).mean() < level :
         p = p + dp
-        if p < 0:
+        if p > 1:
             break
     phi = p
 
@@ -235,8 +236,8 @@ proportioncisim(phat, 100, level=0.95)
 ## Exact Confidence Interval
 
 ```{python}
-import scipy
 #| echo: true
+import scipy
 def proportionci(phat, n, level=0.95):
     se = (phat*(1-phat)/n)**0.5
     dp = se/200
@@ -250,12 +251,13 @@ def proportionci(phat, n, level=0.95):
     p = phat + dp
     while (scipy.stats.binom.cdf(k,n,p) > (1-level)/2) :
         p = p + dp
-        if p < 0 :
+        if p > 1 :
             break
     phi = p
     return(plo,phi)
 
-proportionci(phat, n)
+print("Simulation-based:", proportioncisim(0.05, 100, level=0.95, S=10_000))
+print("Quantile-based:  ", proportionci(0.05, 100))
 ```
 
 ## Exact Confidence Interval
@@ -326,7 +328,7 @@ def Ex3(xhi):
     return p*xhi**3 + (1-p)*-xlo**3
 
 e3 = np.mean(np.pow(np.abs(dgp(100_000)),3))
-print(f"E[|x|^3] is about {e3:.2}, exact is {Ex3(5):.2}")
+print(f"E[|x|^3] is about {e3:.2}, exact is {Ex3(2):.2}")
 
 def plotcdfwithbounds(dgp,  e3, n=[10,100,1000], S=9999):
     cmap = sns.color_palette("tab10")
@@ -343,20 +345,20 @@ def plotcdfwithbounds(dgp,  e3, n=[10,100,1000], S=9999):
     plt.title("Distribution of Scaled Sample Mean")
     return(plt.gcf())
 
-fig=plotcdfwithbounds(dgp, e3)
+fig=plotcdfwithbounds(dgp, Ex3(2))
 fig.show()
 ```
 
 ::: {.notes}
 
-This particular DGP of a skewed distribution with two points of support is the worst in terms of getting close to the bound. Esseen showed the best error is greater than $0.4 \Er[|X|^3]/\sqrt{n}$ for a similar distribution.
+This particular DGP of a skewed distribution with two points of support is the worst in terms of getting close to the bound. Esseen showed the best possible error is at least $0.4 \Er[|X|^3]/\sqrt{n}$ for a similar distribution.
 
 :::
 
 ## Approximate Confidence Interval
 
 ```{python}
-#| echo: True
+#| echo: true
 def normalci(estimate, se, level=0.95):
     return (estimate + se*scipy.stats.norm.ppf((1-level)/2),
             estimate + se*scipy.stats.norm.ppf(1-(1-level)/2))
@@ -370,7 +372,7 @@ lo*1000, hi*1000
 ```{python}
 def differenceci(e1,se1, e0, se0, level=0.95) :
     diff = e1 - e0
-    se = (se1*se1 + se0*s0)**0.5
+    se = (se1*se1 + se0*se0)**0.5
     return(normalci(diff, se, level=level))
 
 p0 = pfizerall.NYU/pfizerall.NU
@@ -396,11 +398,14 @@ $$
 ### Delta Method
 
 If
-1. $\sqrt{n} (\hat{\theta} - \theta_0) \leadsto N(0,\Omega)$
+1. $\hat{\theta} \leadsto N(\theta_0,\Omega)$
 
 2. $g: \R^k \to \R^m$ is continuously differentiable
 
-Then $\sqrt{n}(g(\hat{\theta}) - g(\theta_0)) \leadsto N\left(0, D(g)(\theta_0) \Omega D(g)(\theta_0) \right)'$
+Then
+$$
+g(\hat{\theta}) \leadsto N\left(g(\theta_0), D(g)(\theta_0) \Omega D(g)(\theta_0)'\right)
+$$
 
 :::
 
@@ -416,7 +421,7 @@ Then $\sqrt{n}(g(\hat{\theta}) - g(\theta_0)) \leadsto N\left(0, D(g)(\theta_0) 
 import torch
 
 theta = [p0, phat]
-Omega = np.matrix([[s0**2, 0], [0, se**2]])
+Omega = np.array([[s0**2, 0], [0, se**2]])
 def ve(theta) :
     return(1 - theta[1]/theta[0])
 
@@ -425,17 +430,17 @@ def deltamethod(g, theta, Omega) :
     val = g(x)
     val.backward()
     Dg = x.grad.numpy()
-    return(Dg @ Omega @ Dg.transpose())
+    return(float(Dg @ Omega @ Dg.transpose()))
 
-print(f"Efficacy among everyone is {ve(theta):.3} ({deltamethod(ve,theta,Omega)[0,0]**0.5:.2})")
+print(f"Efficacy among everyone is {ve(theta):.3} ({deltamethod(ve,theta,Omega)**0.5:.2})")
 ```
 
 ## Simulating Distribution of $g(\theta)$
 
-- Suppose $\sqrt{n} (\hat{\theta} - \theta_0) \leadsto N(0,\Omega)$
-- Create $\tilde{\theta}_s \sim N(\hat{\theta}, \Omega/n)$
-   - so $\sqrt{n}(\tilde{\theta}_s - \hat{\theta}) \sim N(0,\Omega)$
-- and $\sqrt{n}(g(\theta_{s}) - g(\hat{\theta})) \approx \sqrt{n}(g(\hat{\theta}) - g(\theta_0))$
+- Suppose $\hat{\theta} \leadsto N(\theta_0, \Omega)$
+- Draw $\tilde{\theta}_s \sim N(\hat{\theta}, \Omega)$
+   - so $\tilde{\theta}_s - \hat{\theta} \sim N(0,\Omega)$
+- Then $g(\tilde{\theta}_s) - g(\hat{\theta}) \approx g(\hat{\theta}) - g(\theta_0)$
 
 ## Simulated Distribution of Vaccine Efficacy
 
@@ -450,12 +455,27 @@ gs, gv=simulateg(ve, theta, Omega)
 print(f"simulation se = {gv**0.5:.2}")
 
 plt.hist(gs, bins=50, alpha=0.5, density=True)
-dse = deltamethod(ve,theta,Omega)[0,0]**0.5
+dse = deltamethod(ve,theta,Omega)**0.5
 z = np.linspace(-3,3,num=100)*dse + ve(theta)
 fdeltamethod = scipy.stats.norm(loc=ve(theta), scale=dse).pdf
 plt.plot(z, fdeltamethod(z))
 plt.title("Distribution of Vaccine Efficacy")
 plt.show()
+```
+
+## Comparing Vaccine Efficacy Intervals
+
+- All three approaches should give similar results
+- Statsmodels computes a Wald interval on the log risk-ratio scale, which is the same idea as the delta method
+
+```{python}
+#| echo: true
+vesim = np.percentile(gs, [2.5, 97.5])
+vedm = normalci(ve(theta), deltamethod(ve,theta,Omega))
+vesm = pfizerall.VE()[1]
+print(f"Simulation:  [{vesim[0]:.3}, {vesim[1]:.3}]")
+print(f"Delta method: [{vedm[0]:.3}, {vedm[1]:.3}]")
+print(f"Statsmodels:  [{vesm[0]:.3}, {vesm[1]:.3}]")
 ```
 
 # Bootstrap
@@ -479,7 +499,7 @@ plt.show()
 ```{python}
 #| output-location: slide
 np.random.seed(6987)
-def dgp(n):
+def lognormal_dgp(n):
     x = np.exp(abs(np.random.normal(0,1,n)))
     return x
 
@@ -499,12 +519,12 @@ def cltdistmean(data, B=999):
 cmap = sns.color_palette("tab10")
 n = 20
 B = 999
-true = estimator(dgp(n*10_000))
+true = estimator(lognormal_dgp(n*10_000))
 # simulate true distribution of estimator
-estsims = [estimator(dgp(n)) - true for _ in range(S)]
+estsims = [estimator(lognormal_dgp(n)) - true for _ in range(S)]
 sns.ecdfplot(estsims, label="True distribution", linewidth=3, color="black")
 for b in range(3):
-    data = dgp(n)
+    data = lognormal_dgp(n)
     sns.ecdfplot(bootstrap(data, estimator, B=B), alpha=0.5, label=f"Bootstrap {b}", color=cmap[b])
     sns.ecdfplot(cltdistmean(data,B=10*B), alpha=0.5,
                  label=f"CLT {b}", color=cmap[b], linestyle='dashed')
@@ -551,16 +571,16 @@ def tbootstrap(data, estimator, B=999):
     return bestimates
 
 cmap = sns.color_palette("tab10")
-true = estimator(dgp(n*10_000))
+true = estimator(lognormal_dgp(n*10_000))
 # simulate true distribution of estimator
 estsims = np.zeros(S)
 for s in range(S):
-    m, sd = estimator(dgp(n))
+    m, sd = estimator(lognormal_dgp(n))
     estsims[s] = (m-true[0])/sd
 
 sns.ecdfplot(estsims, label="True distribution", linewidth=3, color="black")
 for b in range(3):
-    data = dgp(n)
+    data = lognormal_dgp(n)
     sns.ecdfplot(tbootstrap(data, estimator, B=B), alpha=0.5, label=f"Pivotal Bootstrap {b}", color=cmap[b])
 
 x = np.linspace(-4.5, 4.5, num=200)
@@ -584,14 +604,15 @@ def bootstrapci(data, estimator, B=999, level=0.95):
     hi = np.percentile(estimates, 100*(1-(1-level)/2)) + estimator(data)
     return lo, hi
 
-bootstrapci(dgp(n), np.mean)
+bootstrapci(lognormal_dgp(n), np.mean)
 ```
+
 # Complications and Warnings
 
 ## Multiple Testing
 
-- If construct many confidence intervals, there is high change at least one will not contain the true parameter
-  - 65% chance with twenty 95% confidence intervals
+- If we construct many confidence intervals, there is a high chance that at least one will not contain the true parameter
+  - ~64% chance with twenty 95% confidence intervals
 - Trying many things and only focusing on "statistically significant" results only leads to spurious conclusions
 
 
@@ -623,7 +644,7 @@ bootstrapci(dgp(n), np.mean)
 
 ## Sources and Further Reading
 
-- [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html.html) of @facure2022
+- [Chapter 3](https://matheusfacure.github.io/python-causality-handbook/03-Stats-Review-The-Most-Dangerous-Equation.html) of @facure2022
 - [Chapter 1](https://causalml-book.org/) of @causalml2024
 
 ## References {.scrollable}
