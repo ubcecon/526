@@ -471,7 +471,7 @@ plt.show()
 ```{python}
 #| echo: true
 vesim = np.percentile(gs, [2.5, 97.5])
-vedm = normalci(ve(theta), deltamethod(ve,theta,Omega))
+vedm = normalci(ve(theta), np.sqrt(deltamethod(ve,theta,Omega)))
 vesm = pfizerall.VE()[1]
 print(f"Simulation:  [{vesim[0]:.3}, {vesim[1]:.3}]")
 print(f"Delta method: [{vedm[0]:.3}, {vedm[1]:.3}]")
