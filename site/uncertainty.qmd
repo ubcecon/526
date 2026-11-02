@@ -172,7 +172,7 @@ print(pfizer65.table())
 
 - A function of the data constructed so that
 $$
-P(\widehat{ATE} \in \widehat{CI}_{\alpha}) \approx 1-\alpha
+P(ATE \in \widehat{CI}_{\alpha}) \approx 1-\alpha
 $$
 - Can create if we know the (approximate) distribution of the data or the estimate
 
@@ -212,19 +212,19 @@ $$
 #| echo: true
 def proportioncisim(phat, n, level=0.95, S=100_000):
     se = (phat*(1-phat)/n)**0.5
-    dp = se/20
+    dp = se/20 if se > 0 else 1/(20*n)
     p = phat - dp
     while (abs(np.random.binomial(n,p, S)/n-p) <= abs((phat-p))).mean() < level :
         p = p - dp
         if p < 0:
             break
-    plo = p
+    plo = max(p, 0.0)
     p = phat + dp
     while (abs(np.random.binomial(n,p,S)/n-p) <= abs((phat-p))).mean() < level :
         p = p + dp
         if p > 1:
             break
-    phi = p
+    phi = min(p, 1.0)
 
     return(plo,phi)
 
@@ -240,20 +240,23 @@ proportioncisim(phat, 100, level=0.95)
 import scipy
 def proportionci(phat, n, level=0.95):
     se = (phat*(1-phat)/n)**0.5
-    dp = se/200
+    dp = se/200 if se > 0 else 1/(200*n)
     k = round(phat*n)
-    p = phat - dp
-    while (scipy.stats.binom.cdf(k,n,p) < (1-(1-level)/2) ) :
-        p = p - dp
-        if (p < 0):
-            break
-    plo = p
+    if k == 0:
+        plo = 0.0
+    else:
+        p = phat - dp
+        while (scipy.stats.binom.cdf(k-1,n,p) < (1-(1-level)/2) ) :
+            p = p - dp
+            if (p < 0):
+                break
+        plo = max(p, 0.0)
     p = phat + dp
     while (scipy.stats.binom.cdf(k,n,p) > (1-level)/2) :
         p = p + dp
         if p > 1 :
             break
-    phi = p
+    phi = min(p, 1.0)
     return(plo,phi)
 
 print("Simulation-based:", proportioncisim(0.05, 100, level=0.95, S=10_000))
@@ -519,6 +522,7 @@ def cltdistmean(data, B=999):
 cmap = sns.color_palette("tab10")
 n = 20
 B = 999
+S = 10_000
 true = estimator(lognormal_dgp(n*10_000))
 # simulate true distribution of estimator
 estsims = [estimator(lognormal_dgp(n)) - true for _ in range(S)]
