@@ -17,6 +17,9 @@ format:
       boardmarker-width: 2
       chalk-width: 2
       chalk-effect: 0.0
+    title-slide-attributes:
+          data-background-image: "sphinxbay.jpg"
+          data-background-size: contain
 execute:
   cache: true
   code-fold: true
@@ -246,6 +249,7 @@ plt.show()
   - Observe $Y_{it} = Y_{it}(D_{it})$
 
 Observed Outcomes
+
 |  | Before | After |
 |---|---:|---:|
 | Expansion schools | $Y_{i0}(0)$ | $Y_{i1}(1)$ |
@@ -258,25 +262,26 @@ $$
 -\underbrace{(Y_{j1}(1)-Y_{j0}(0))}_{\text{comparison school's change}}
 $$
 
-- The other schools' change stands in for expansion schools' missing no-tutoring-expansion trend.
-
 ## Difference in differences
 
 
 ::: {.callout-note}
 **Key assumption: parallel trends.** Without the expansion, graduation rates in the two sets of schools would have changed similarly.
 $$
-\underbrace{\Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1]}_{\text{\textcolor{red}{unobserved}}} = \underbrace{\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]}_{\text{observed}}
+\underbrace{\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1]}_{\text{unobserved}} = \underbrace{\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]}_{\text{observed}}
 $$
 - Implies:
 $$
 \begin{align*}
 \text{DiD} = & \Er[Y_{i1}(1) - Y_{i0}(0) | D_{i1}=1] - \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0] \\
-= & \Er[Y_{i1}(1) - Y_{i0}(0) | D_{i1}=1] - \Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1] \\
-= & \Er[Y_{i1}(1) - \textcolor{red}{Y_{i1}(0)} | D_{i1}=1] = \text{ATT}
+= & \Er[Y_{i1}(1) - Y_{i0}(0) | D_{i1}=1] - \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1] \\
+= & \Er[Y_{i1}(1) - Y_{i1}(0) | D_{i1}=1] = \text{ATT}
+\end{align*}
 $$
 
 :::
+
+## Event Study
 
 ```{python}
 period = np.arange(-3, 4)
@@ -307,7 +312,7 @@ plt.show()
 - Thinking about how treatment was assigned helps assess plausibility of parallel trends
 - Self-selection into treatment can be problematic
   - E.g. if schools expanded tutoring because teachers noticed that students were increasingly struggling and the teachers expected graduation rates to fall
-      - $\Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]$
+      - $\Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0]$
       - Might show up in pre-treatment trends, if observe $t=-1$, can check whether
        $$
        \Er[Y_{i,0}(0) - Y_{i,-1}(0) | D_{i1}=1] = \Er[Y_{i,0}(0) - Y_{i,-1}(0) | D_{i1}=0]$
@@ -315,7 +320,7 @@ plt.show()
 - Conditioning can sometimes help
    - Conditional parallel trends
    $$
-   \Er[\textcolor{red}{Y_{i1}(0)} - Y_{i0}(0) | D_{i1}=1, X_i] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0, X_i]
+   \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=1, X_i] \neq \Er[Y_{i1}(0) - Y_{i0}(0) | D_{i1}=0, X_i]
    $$
 
 
@@ -363,9 +368,6 @@ plt.show()
 
 - Both need panel data with some units treated, others untreated
 
-::: {.columns}
-
-::: {.column width="50%"}
 
 - Synthetic Control:
    - best for one or few treated units, many untreated units, many pre-treatment periods
@@ -376,17 +378,10 @@ plt.show()
        \theta_t}_{\text{unobserved interactive effects (or factors)}} + \epsilon_{it}
      $$
 
-:::
-
-::: {.column width="50%"}
 
 - Difference in differences:
    - many treated and untreated units, okay with fewer periods
    - Assumption: Parallel trends
-
-:::
-
-:::
 
 # Instruments and Cutoffs
 
@@ -404,9 +399,6 @@ Z_i \indep Y(0), Y(1), D(z)
 $$
 - It must affect graduation through tutoring, not through another channel.
   - Potential outcomes are $Y(D(Z))$, not $Y(D,Z)$.
-
-IV estimates an effect for students whose tutoring attendance responds to the offer—not necessarily for everyone.
-
 
 
 ## IV
@@ -466,7 +458,7 @@ plt.show()
 
 **Why might that work?**
 
-Students very close to the cutoff may be similar. If graduation rates would otherwise change smoothly around 60, a jump in graduation identifies the effect of **eligibility**. If eligibility affects graduation only by changing tutoring attendance, the cutoff can also identify a local effect of tutoring for students whose attendance it changes.
+Students very close to the cutoff may be similar. If graduation rates would otherwise change smoothly around 60, a jump in graduation identifies the effect.
 
 
 - Assumption: continuity of $\Er[Y(1)|R=r]$ and $\Er[Y(0)|R=r]$
@@ -633,7 +625,8 @@ Your proposal should include:
 - treatment
 - outcome
 - data
-- comparison
+- comparison / control group
+- method
 - key assumptions
 
 :::
