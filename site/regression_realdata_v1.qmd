@@ -1,0 +1,387 @@
+---
+title: "Linear Regression with Real Data"
+subtitle: "ECON526"
+author:
+    - name: Paul Schrimpf
+      affiliations: University of British Columbia
+format:
+    revealjs:
+        width: 1600
+        height: 900
+        min-scale: 0.1
+        toc: true
+        toc-depth: 1
+        progress: true
+        chalkboard:
+          theme: whiteboard
+          boardmarker-width: 2
+          chalk-width: 2
+          chalk-effect: 0.0
+        title-slide-attributes:
+          data-background-image: "youngtraverse.jpg"
+          data-background-size: contain
+execute:
+  cache: true
+  echo: true
+bibliography: 526.bib
+---
+# Real-Data Examples
+
+## Why Replace the Synthetic Examples?
+
+- The synthetic examples in [regression.qmd](regression.qmd) are clean, but they are not *economics*.
+- This deck uses four published replication datasets to illustrate:
+  1. bad controls, mediators, and colliders;
+  2. omitted variables when treatment probabilities and treatment effects vary;
+  3. why stratified/saturated regression can reduce standard errors in an RCT;
+  4. a real-data sign reversal.
+- The examples are deliberately chosen so that the data and the original paper can be traced and cited.
+
+## The Four Datasets
+
+| Dataset | Paper | Main use here |
+|---|---|---|
+| Afrobarometer + slave exports | @nunn2011slave | bad control / mediator |
+| Oregon Health Insurance Experiment | @finkelstein2012oregon | treatment-probability and effect heterogeneity |
+| Project STAR | @krueger1999experimental; @achilles2008star | stratified regression and SEs |
+| German city associations | @satyanath2017bowling | sign reversal |
+
+## Data Sources and Redistribution
+
+| Dataset | Source | Redistribute in this repo? |
+|---|---|---|
+| Nunn--Wantchekon | AEA/openICPSR, [doi:10.3886/E112479V1](https://doi.org/10.3886/E112479V1); public mirror used by the code | **No.** The raw `.dta` is not committed. The code downloads it from a public course mirror; the original replication package is the citation above. |
+| OHIE | Harvard Dataverse, [doi:10.7910/DVN/SJG1ED](https://doi.org/10.7910/DVN/SJG1ED) | **Yes**, for the small processed extract. Original is CC0 with additional terms: no commercial use, no re-identification, and cite the data. |
+| Project STAR | Harvard Dataverse, [doi:10.7910/DVN/SIWH9F](https://doi.org/10.7910/DVN/SIWH9F) | **Yes.** CC0; a processed extract is included. |
+| Bowling for Fascism | Harvard Dataverse, [doi:10.7910/DVN/EE6I7N](https://doi.org/10.7910/DVN/EE6I7N) | **Yes.** CC0; a processed extract is included. |
+
+::: {.aside}
+The Nunn--Wantchekon raw file is not redistributed here. If the download fails, obtain `Nunn_Wantchekon_AER_2011.dta` from the AEA/openICPSR package or from the public IQSS mirror linked in the code below.
+:::
+
+# Bad Controls, Mediators, and Colliders
+
+## Nunn and Wantchekon (2011)
+
+- Question: did the transatlantic and Indian Ocean slave trades leave a legacy of mistrust in Africa?
+- Treatment: `ln_export_area`, log slave exports per historical ethnic-group area.
+- Outcome: trust in the local government council.
+- Candidate control: perceived performance/quality of the local council.
+
+```{python}
+#| code-fold: true
+import os
+import warnings
+import numpy as np
+import pandas as pd
+import requests
+import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt
+
+warnings.filterwarnings("ignore")
+
+nunn_path = "data/replication/Nunn_Wantchekon_AER_2011.dta"
+nunn_url = ("https://raw.githubusercontent.com/iqss/prefresher/main/"
+            "data/input/Nunn_Wantchekon_AER_2011.dta")
+if not os.path.exists(nunn_path):
+    r = requests.get(nunn_url)
+    r.raise_for_status()
+    with open(nunn_path, "wb") as f:
+        f.write(r.content)
+
+nunn = pd.read_stata(nunn_path)
+for c in ["isocode", "occupation", "religion", "living_conditions", "education"]:
+    nunn[c] = nunn[c].astype("category")
+
+nunn_vars = [
+    "trust_local_council", "ln_export_area", "age", "age2", "male", "urban_dum",
+    "occupation", "religion", "living_conditions", "education",
+    "district_ethnic_frac", "frac_ethnicity_in_district", "isocode", "district",
+    "local_council_performance", "council_listen", "corrupt_local_council",
+]
+nunn_d = nunn.dropna(subset=nunn_vars).copy()
+```
+
+## Nunn and Wantchekon (2011)
+
+- What happens when we add local-council quality?
+- If council quality is a **mediator**, the coefficient is no longer the total effect.
+- If council quality is a **collider**, conditioning opens a non-causal path.
+
+```{python}
+#| code-fold: true
+nunn_models = {
+    "(1) bivariate": "trust_local_council ~ ln_export_area",
+    "(2) + individual controls": (
+        "trust_local_council ~ ln_export_area + age + age2 + male + urban_dum "
+        "+ C(occupation) + C(religion) + C(living_conditions) + C(education)"
+    ),
+    "(3) + country FE": (
+        "trust_local_council ~ ln_export_area + age + age2 + male + urban_dum "
+        "+ C(occupation) + C(religion) + C(living_conditions) + C(education) "
+        "+ C(isocode)"
+    ),
+    "(4) + council performance": (
+        "trust_local_council ~ ln_export_area + age + age2 + male + urban_dum "
+        "+ C(occupation) + C(religion) + C(living_conditions) + C(education) "
+        "+ C(isocode) + local_council_performance"
+    ),
+    "(5) + all council quality": (
+        "trust_local_council ~ ln_export_area + age + age2 + male + urban_dum "
+        "+ C(occupation) + C(religion) + C(living_conditions) + C(education) "
+        "+ C(isocode) + local_council_performance + council_listen "
+        "+ corrupt_local_council"
+    ),
+}
+nunn_rows = []
+for name, form in nunn_models.items():
+    m = smf.ols(form, data=nunn_d).fit(
+        cov_type="cluster", cov_kwds={"groups": nunn_d["district"]}
+    )
+    nunn_rows.append({
+        "Specification": name,
+        "Coefficient on ln(exports)": m.params["ln_export_area"],
+        "SE": m.bse["ln_export_area"],
+        "N": int(m.nobs),
+    })
+nunn_table = pd.DataFrame(nunn_rows).set_index("Specification")
+print(nunn_table.round(3).to_markdown())
+```
+
+## Nunn and Wantchekon (2011): Interpretation
+
+- The coefficient falls from about $-0.15$ to $-0.06$ once council quality is included.
+- The total effect of the slave trade includes any effect operating through local institutions.
+- Holding council quality fixed changes the estimand from a total effect to a direct effect, and it can also open a collider path if unobserved local public goods affect both council quality and trust.
+- This is the real-data version of the "bad control" warning: more controls are not always better.
+
+# Treatment Probabilities and Effect Heterogeneity
+
+## Oregon Health Insurance Experiment
+
+- Lottery-based Medicaid expansion in Oregon.
+- Treatment: selected in the lottery.
+- Outcome: any doctor visit in the in-person survey.
+- Randomization was not i.i.d. across household sizes: lottery odds varied with the number of eligible household members.
+
+```{python}
+#| code-fold: true
+ohie = pd.read_csv("data/replication/ohie_analysis.csv")
+ohie = ohie.dropna(subset=["doc_any", "treatment", "numhh"]).copy()
+ohie["numhh"] = ohie["numhh"].astype(int)
+
+prob_table = (
+    ohie.groupby("numhh")
+    .agg(P_treated=("treatment", "mean"), N=("treatment", "size"))
+    .reset_index()
+)
+print(prob_table.round(3).to_markdown(index=False))
+
+ohie_effects = []
+for h in sorted(ohie["numhh"].unique()):
+    g = ohie[ohie["numhh"] == h]
+    m = smf.ols("doc_any ~ treatment", data=g).fit(cov_type="HC1")
+    ohie_effects.append({
+        "Household size": h,
+        "Effect on P(doctor visit)": m.params["treatment"],
+        "SE": m.bse["treatment"],
+        "N": int(m.nobs),
+    })
+print("\n" + pd.DataFrame(ohie_effects).round(3).to_markdown(index=False))
+```
+
+## Oregon Health Insurance Experiment
+
+- Simple difference versus adjustment for household size:
+
+```{python}
+#| code-fold: true
+ohie_models = {
+    "Simple difference": "doc_any ~ treatment",
+    "+ household size": "doc_any ~ treatment + C(numhh)",
+    "+ household size interactions": "doc_any ~ treatment * C(numhh)",
+}
+ohie_rows = []
+for name, form in ohie_models.items():
+    m = smf.ols(form, data=ohie).fit(cov_type="HC1")
+    ohie_rows.append({
+        "Specification": name,
+        "Effect": m.params["treatment"],
+        "SE": m.bse["treatment"],
+        "N": int(m.nobs),
+    })
+print(pd.DataFrame(ohie_rows).set_index("Specification").round(4).to_markdown())
+```
+
+## Oregon Health Insurance Experiment: What Is the Lesson?
+
+- $P(D=1\mid X)$ varies with household size: about 0.49, 0.61, and 0.89 in the analysis sample for one-, two-, and three-person households.
+- The treatment effect also varies: the largest effects are for the largest households.
+- With heterogeneous effects and non-constant propensity scores, the simple difference in means is a weighted average that need not equal the ATE.
+- Adjusting for the randomization stratum changes the estimate and its interpretation.
+- Here `numhh` is a **good** control: it is pre-treatment and determines treatment probabilities. It is not a mediator.
+
+# Stratified Regression and Standard Errors
+
+## Project STAR
+
+- Tennessee class-size experiment: students were randomized to small classes, regular classes, or regular classes with a teacher's aide.
+- Outcome: kindergarten reading score.
+- Treatment: small class versus regular class (aide classes omitted for this comparison).
+- School is a randomization stratum; baseline covariates are available.
+
+```{python}
+#| code-fold: true
+star = pd.read_csv("data/replication/star_k.csv")
+star = star[star["classtype"].isin([1, 2])].copy()
+star["small"] = (star["classtype"] == 1).astype(int)
+star = star.dropna(subset=["read", "small", "school", "gender", "race", "freelunch"])
+
+star_models = {
+    "Simple difference": "read ~ small",
+    "+ school FE": "read ~ small + C(school)",
+    "+ school FE + covariates": "read ~ small + C(school) + gender + race + freelunch",
+}
+star_rows = []
+for name, form in star_models.items():
+    m = smf.ols(form, data=star).fit(cov_type="HC1")
+    star_rows.append({
+        "Specification": name,
+        "Effect of small class": m.params["small"],
+        "SE": m.bse["small"],
+        "N": int(m.nobs),
+    })
+print(pd.DataFrame(star_rows).set_index("Specification").round(3).to_markdown())
+```
+
+## Project STAR: Interpretation
+
+- The point estimate is stable at roughly 6--7 points.
+- Controlling for the randomization stratum (school) and baseline covariates reduces the standard error by about 10 percent.
+- That is the intuition behind saturated/stratified regression in an RCT: removing predictable between-stratum variation in outcomes sharpens the treatment contrast.
+- With many strata, fully interacting treatment with every stratum can be noisy; additive stratum effects are often the practical compromise.
+
+# A Real Sign Reversal
+
+## Bowling for Fascism
+
+- @satyanath2017bowling study 229 German towns and cities in the 1920s.
+- Treatment: association density (clubs per capita).
+- Outcome: total Nazi Party entries by early 1933.
+- A bivariate regression says denser association networks are associated with *fewer* Nazi entries. Is that credible?
+
+```{python}
+#| code-fold: true
+bowling = pd.read_csv("data/replication/bowling_cities.csv")
+bowling["high_clubs"] = (bowling["clubs_all_pc"] >
+                         bowling["clubs_all_pc"].median()).astype(int)
+
+bowling_models = {
+    "Bivariate": "NSentry_total ~ clubs_all_pc",
+    "+ log population": "NSentry_total ~ clubs_all_pc + lnpop",
+    "+ population controls": (
+        "NSentry_total ~ clubs_all_pc + lnpop + share_cath25 "
+        "+ bcollar25 + share_jew25 + unemp33"
+    ),
+    "Binary density + controls": (
+        "NSentry_total ~ high_clubs + lnpop + share_cath25 "
+        "+ bcollar25 + share_jew25 + unemp33"
+    ),
+}
+bowling_rows = []
+for name, form in bowling_models.items():
+    m = smf.ols(form, data=bowling).fit(cov_type="HC1")
+    key = "clubs_all_pc" if "clubs_all_pc" in m.params else "high_clubs"
+    bowling_rows.append({
+        "Specification": name,
+        "Effect": m.params[key],
+        "SE": m.bse[key],
+        "N": int(m.nobs),
+    })
+print(pd.DataFrame(bowling_rows).set_index("Specification").round(3).to_markdown())
+```
+
+## Bowling for Fascism: The Sign Reversal
+
+```{python}
+#| code-fold: true
+bowling["pop_quintile"] = pd.qcut(
+    bowling["lnpop"], 5, labels=["Q1 small", "Q2", "Q3", "Q4", "Q5 large"]
+)
+means = (
+    bowling.groupby(["pop_quintile", "high_clubs"], observed=True)["NSentry_total"]
+    .mean()
+    .unstack()
+)
+print(means.round(1).to_markdown())
+
+fig, ax = plt.subplots(figsize=(9, 4.5))
+means.plot(kind="bar", ax=ax, color=["C2", "C3"])
+ax.set_xlabel("City-size quintile")
+ax.set_ylabel("Mean Nazi Party entries")
+ax.set_title("High vs low association density, by city size")
+ax.legend(["Low density", "High density"], frameon=False)
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+```
+
+## Bowling for Fascism: Interpretation
+
+- The bivariate slope is negative: denser association networks look like they slowed Nazi entry.
+- But association density is much higher in small towns, and small towns have far fewer total entries.
+- Adding log population flips the coefficient from about $-16.4$ to $+7.0$; with controls it remains positive.
+- In four of the five city-size quintiles, high-density towns have more Nazi entries; the bivariate result is driven by the smallest towns.
+- This is a real-data version of the caution slide: a linear regression is a best linear approximation, not a guarantee that the sign answers the causal question.
+- The paper's own conclusion is that denser social networks were associated with *faster* Nazi Party entry.
+
+# Data Appendix
+
+## Reproducing the Extracts
+
+```{python}
+#| code-fold: true
+sources = pd.DataFrame([
+    {
+        "Dataset": "Nunn--Wantchekon",
+        "Local file": "data/replication/Nunn_Wantchekon_AER_2011.dta",
+        "Original source": "https://doi.org/10.3886/E112479V1",
+        "Redistributed": "No",
+    },
+    {
+        "Dataset": "OHIE",
+        "Local file": "data/replication/ohie_analysis.csv",
+        "Original source": "https://doi.org/10.7910/DVN/SJG1ED",
+        "Redistributed": "Yes (processed extract; CC0 + terms)",
+    },
+    {
+        "Dataset": "Project STAR",
+        "Local file": "data/replication/star_k.csv",
+        "Original source": "https://doi.org/10.7910/DVN/SIWH9F",
+        "Redistributed": "Yes (processed extract; CC0)",
+    },
+    {
+        "Dataset": "Bowling for Fascism",
+        "Local file": "data/replication/bowling_cities.csv",
+        "Original source": "https://doi.org/10.7910/DVN/EE6I7N",
+        "Redistributed": "Yes (processed extract; CC0)",
+    },
+])
+print(sources.to_markdown(index=False))
+```
+
+## Data Notes
+
+- **Nunn--Wantchekon:** the raw file is not redistributed. The code downloads the public IQSS mirror; the authoritative replication package is @nunn2011data at openICPSR. If you need to download it manually, use the DOI and place the file at `data/replication/Nunn_Wantchekon_AER_2011.dta`.
+- **OHIE:** the processed extract keeps only analysis variables and drops direct identifiers. The original is CC0 with additional terms: no commercial use, no re-identification, and citation of @finkelstein2012data. See the Dataverse record for the full terms.
+- **Project STAR:** CC0. The processed extract is `star_k.csv`; the original deposit is @achilles2008star.
+- **Bowling for Fascism:** CC0. The processed extract is `bowling_cities.csv`; the original deposit is @satyanath2017data.
+
+## Source Citations
+
+- @nunn2011slave; replication package: @nunn2011data.
+- @finkelstein2012oregon; data: @finkelstein2012data.
+- @krueger1999experimental; data: @achilles2008star.
+- @satyanath2017bowling; data: @satyanath2017data.
+
+# References
