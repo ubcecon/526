@@ -337,7 +337,7 @@ import lightgbm as lgb
 import io
 from contextlib import redirect_stdout, redirect_stderr
 models = [
-    linear_model.LassoCV(cv=10, n_alphas=25, max_iter=500, tol=1e-4, n_jobs=20),
+    linear_model.LassoCV(cv=10, alphas=25, max_iter=500, tol=1e-4, n_jobs=20),
     ensemble.RandomForestRegressor(n_estimators=200, min_samples_leaf=20, n_jobs=20),
     lgb.LGBMRegressor(n_estimators=200, max_depth=4, reg_lambda=1.0, reg_alpha=0.0, n_jobs=20),
     neural_network.MLPRegressor(hidden_layer_sizes=(20, 10), max_iter=500, activation="logistic",

@@ -10,3 +10,15 @@
 /site/data
 /ECON526
 \#*
+
+# Small redistributable extracts for site/regression_realdata.qmd
+!/site/data/
+!/site/data/replication/
+!/site/data/replication/*.csv
+!/site/data/replication/README.md
+!/site/data/replication/.gitignore
+!/site/data/replication/prepare_data.py
+
+.comandcode/
+site/pyrightconfig.json
+site/requirements.txt

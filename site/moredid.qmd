@@ -398,7 +398,7 @@ def plotcohortatt(modc):
         t,c = m.groups()
         t=int(t)
         c=int(c)
-        catt.loc[coef.index[i]] = [t,c,coef.iloc[i],np.abs(ci.iloc[i][0]-coef.iloc[i])]
+        catt.loc[coef.index[i]] = [t,c,coef.iloc[i],np.abs(ci.iloc[i].iloc[0]-coef.iloc[i])]
 
     catt.sort_values(['c','t'],inplace=True)
     fig, ax = plt.subplots()
@@ -531,7 +531,7 @@ def eventstudyplot(modct) :
     V = np.hstack([V,np.zeros((V.shape[0],1))])
 
     def did(g) :
-        c = g.c.unique()[0]
+        c = g.name
         timestreated = bin(c).count('1')
         t0 = T - timestreated
         g=g.set_index('t')
@@ -540,7 +540,7 @@ def eventstudyplot(modct) :
         g['se'] = np.sqrt(V[vi,vi] - 2*V[g['vindex'][t0],vi] + V[g['vindex'][t0],g['vindex'][t0]])
         return(g)
 
-    evdf=evdf.groupby('c').apply(did).drop(columns='c').reset_index()
+    evdf=evdf.groupby('c').apply(did).reset_index()
 
     fig, ax = plt.subplots(len(evdf.c.unique()),1)
     for (i,g) in enumerate(evdf.groupby('c')) :

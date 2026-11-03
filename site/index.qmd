@@ -47,3 +47,12 @@ bibliography: 526.bib
 
 12. [Neural Networks](neuralnets.qmd), [notebook](neuralnets.ipynb)
    - Reading: [QuantEcon Datascience: Regression - Neural Networks](https://datascience.quantecon.org/tools/regression.html#neural-networks)
+
+
+::: {.callout-info}
+
+## Declaration of AI Use
+
+These slides were originally written before AI was useful. AI is being used for corrections, code updates required by dependency updates, and some generation of new figures.
+
+:::

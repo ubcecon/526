@@ -113,7 +113,7 @@ $$
 
 ```{python}
 reg=smf.ols('infected ~ treat', data=data.loc[data['over65']==1,:]).fit()
-print(f"regression estimate={reg.params[1]:3}, se={reg.bse[1]:5}")
+print(f"regression estimate={reg.params.iloc[1]:3}, se={reg.bse.iloc[1]:5}")
 ```
 
 
@@ -251,7 +251,7 @@ $$y_i = x_i \beta + w_i'\gamma + u_i$$
 - Multiple regression of $y$ on $x$ and $w$, or
 
 ```{python}
-smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps, missing="drop").fit(cov_type="HC3").params[1]
+smf.ols(formula="log_earn ~ female + log_hourslw + log_uhours", data=cps, missing="drop").fit(cov_type="HC3").params.iloc[1]
 ```
 :::
 
@@ -264,7 +264,7 @@ ey=smf.ols(formula="log_earn ~ log_hourslw + log_uhours", data=cps, missing="dro
 ex=smf.ols(formula="I(1*female) ~ log_hourslw + log_uhours", data=cps, missing="drop").fit().resid
 edf = pd.concat([ex,ey],axis=1)
 edf.columns=['ex','ey']
-smf.ols('ey ~ ex', data=edf).fit(cov_type="HC3").params[1]
+smf.ols('ey ~ ex', data=edf).fit(cov_type="HC3").params.iloc[1]
 ```
 
 :::
@@ -507,6 +507,8 @@ summary_col(models, model_names=['I','II','III'])
 - @causalml2024 chapters 1 and 2
 
 - [The Effect: Chapter 13 - Regression](https://www.theeffectbook.net/ch-StatisticalAdjustment.html) @hk2021
+
+- [Real-data versions of these examples](regression_realdata.qmd)
 
 
 ## References

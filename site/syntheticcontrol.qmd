@@ -433,6 +433,46 @@ where $\epsilon(T_0) \to 0$ and $\pi(T_0) \to 0$ as $T_0 \to \infty$
 ## Data Preparation
 
 ```{python}
+#| echo: false
+#| output: false
+# Compatibility shims for scpi_pkg with pandas 3 / scikit-learn 1.9.
+import inspect
+import pandas as pd
+import scpi_pkg.scdata as _scpi_scdata
+import scpi_pkg.scpi as _scpi_scpi
+
+# scpi_pkg assumes pandas < 3 behaviour: selecting a single treated unit with
+# .loc kept it as an index level. Pandas 3 drops that level, so restore it
+# before scpi_pkg renames the index levels.
+def _restore_treated_unit_level(y, unit_tr):
+    if y.index.nlevels == 1:
+        y.index = pd.MultiIndex.from_product(
+            [[unit_tr], y.index], names=['treated_unit', '__time'])
+    return y
+
+_scpi_scdata.__dict__['_restore_treated_unit_level'] = _restore_treated_unit_level
+exec(
+    inspect.getsource(_scpi_scdata.scdata).replace(
+        ".reset_index(level='__ID', drop=True)",
+        ".reset_index(level='__ID', drop=True).pipe(_restore_treated_unit_level, unit_tr)",
+    ),
+    _scpi_scdata.__dict__,
+)
+
+# scpi_pkg's flexible residual design can contain duplicate column names,
+# which scikit-learn 1.9 rejects. Rename them; only the values matter.
+_duflex_get = _scpi_scpi.DUflexGet
+
+def _duflex_get_unique(*args, **kwargs):
+    out = _duflex_get(*args, **kwargs)
+    if out.columns.duplicated().any():
+        out.columns = [f"{c}_{i}" for i, c in enumerate(out.columns)]
+    return out
+
+_scpi_scpi.DUflexGet = _duflex_get_unique
+```
+
+```{python}
 import random
 from scpi_pkg.scdata import scdata
 from scpi_pkg.scest import scest

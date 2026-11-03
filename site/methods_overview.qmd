@@ -654,7 +654,7 @@ plt.show()
 
 # Project Proposal
 
-## Project proposal — due November 13
+## Project proposal — due November 16
 
 Bring a focused causal question
 
@@ -677,3 +677,8 @@ Your proposal should include:
 As we study each method, ask: *Could its identifying assumptions be credible for my question and data?*
 
 :::
+
+
+## AI Declaration
+
+AI was used for the code and figures in these slides. The first draft of these slides was created by AI based on the other slides. Extensive human editing was required afterward.
