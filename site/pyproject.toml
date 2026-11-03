@@ -31,4 +31,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pygobject>=3.54.5",
+    "ruff>=0.17.3",
+    "ty>=0.0.96",
 ]

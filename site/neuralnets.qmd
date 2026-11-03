@@ -292,7 +292,7 @@ def doubledescentdemo(x, y, xtest, ytest, f, device=device,
             loss.backward()
             optimizer.step()
             losses[n] = loss_fn(mlp(xtest),ytest).item()
-            nonoise[n] = loss_fn(y_pred, fx)
+            nonoise[n] = loss_fn(y_pred, fx).item()
             mlp.zero_grad()
         return([losses, nonoise])
 
