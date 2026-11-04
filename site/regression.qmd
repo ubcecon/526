@@ -365,6 +365,123 @@ $$
 $$
 
 
+# Examples
+
+## Oregon Health Insurance Experiment
+
+- @finkelstein2012oregon
+- Lottery-based Medicaid expansion in Oregon.
+- Treatment: selected in the lottery.
+- Outcome: any doctor visit in the in-person survey.
+- Randomization was not i.i.d. across household sizes: lottery odds varied with the number of eligible household members.
+
+## P(treatment|number eligible in household)
+
+```{python}
+#| code-fold : true
+ohie = pd.read_csv("data/replication/ohie_analysis.csv")
+ohie = ohie.dropna(subset=["doc_any", "treatment", "numhh", "weight"]).copy()
+ohie["numhh"] = ohie["numhh"].astype(int)
+
+prob_table = (
+    ohie.groupby("numhh")
+    .agg(P_treated=("treatment", "mean"), N=("treatment", "size"))
+    .reset_index()
+)
+print(prob_table.round(3).to_markdown(index=False))
+```
+
+## E[Treatment Effect|number eligible in household]
+
+
+```{python}
+#| code-fold : true
+ohie_effects = []
+for h in sorted(ohie["numhh"].unique()):
+    g = ohie[ohie["numhh"] == h]
+    m = smf.ols("doc_any ~ treatment", data=g, eval_env=0).fit(cov_type="HC3")
+    ci = m.conf_int().loc["treatment"]
+    ohie_effects.append({
+        "Household size": h,
+        "Effect on P(doctor visit)": m.params["treatment"],
+        "SE": m.bse["treatment"],
+        "CI low": ci.iloc[0],
+        "CI high": ci.iloc[1],
+        "N": int(m.nobs),
+    })
+print("\n" + pd.DataFrame(ohie_effects).round(3).to_markdown(index=False))
+```
+
+- But unconditional average is lower
+
+```{python}
+#| code-fold: true
+print(smf.ols("doc_any ~ treatment", data=ohie, eval_env=0).fit(cov_type="HC3").summary().tables[1])
+```
+
+- `numhh` is an omitted variable
+
+## E[Treatment Effect]
+
+- Could take $\Er[\Delta y] = \sum_{n} \Er[\Delta y | numhh=n] P(numhh=n)$
+- Or in a saturated regression with demeaned `numhh` dummies
+```{python}
+#| code-fold : true
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+from patsy.state import stateful_transform
+
+
+class _DemeanedDummies:
+    def __init__(self):
+        self.categories_ = None
+        self.means_ = None
+        self._total_n = 0
+        self._sum = None
+
+    def memorize_chunk(self, x):
+        cat = pd.Categorical(x)
+        if self.categories_ is None:
+            self.categories_ = cat.categories
+
+        dummies = pd.get_dummies(cat, drop_first=True, dtype=float).to_numpy()
+        chunk_sum = dummies.sum(axis=0)
+
+        if self._sum is None:
+            self._sum = chunk_sum
+        else:
+            self._sum += chunk_sum
+        self._total_n += len(dummies)
+
+    def memorize_finish(self):
+        self.means_ = self._sum / self._total_n
+
+    def transform(self, x):
+        cat = pd.Categorical(x, categories=self.categories_)
+        dummies = pd.get_dummies(cat, drop_first=True, dtype=float).to_numpy()
+        return dummies - self.means_
+
+
+center_dummies = stateful_transform(_DemeanedDummies)
+```
+
+```{python}
+print(smf.ols("doc_any ~ treatment*center_dummies(numhh)", data=ohie).fit(cov_type="HC3").summary().tables[1])
+```
+
+## Interactive Has Smaller Variance
+
+```{python}
+c1 = smf.ols("doc_any ~ treatment", data=ohie.query("numhh==2")).fit(cov_type="HC3")
+c2 = smf.ols("doc_any ~ treatment + center(educ)", data=ohie.query("numhh==2")).fit(cov_type="HC3")
+c3 = smf.ols("doc_any ~ treatment*center(educ)", data=ohie.query("numhh==2")).fit(cov_type="HC3")
+from statsmodels.iolib.summary2 import summary_col
+
+print(summary_col([c1,c2,c3], stars=True, float_format="%.5f"))
+```
+
+
 ## Collections and Payment Reminders
 
 - Data from credit firm
@@ -413,7 +530,7 @@ summary_col(lm, stars=True, model_names=[f"{i+1}" for i in range(len(lm))])
 - Any red-flags in the results?
 - What conclusions can we draw?
 
-## "Bad controls" or Mediators or  Colliders
+## "Bad controls", Mediators, and  Colliders
 
 ::: {.aside}
 
