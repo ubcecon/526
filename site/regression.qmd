@@ -625,7 +625,5 @@ summary_col(models, model_names=['I','II','III'])
 
 - [The Effect: Chapter 13 - Regression](https://www.theeffectbook.net/ch-StatisticalAdjustment.html) @hk2021
 
-- [Real-data versions of these examples](regression_realdata.qmd)
-
 
 ## References
