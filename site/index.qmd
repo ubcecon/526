@@ -18,6 +18,7 @@ bibliography: 526.bib
    - Chapters 5-7 of @facure2022 or Chapters 1-2 of @causalml2024
 
 4. [Matching slides](matching.qmd), [notebook](matching.ipynb)
+   - [Real-data application: Forty-Eighters in the Civil War](forty_eighters/matching_forty_eighters.qmd) ([notebook](forty_eighters/matching_forty_eighters.ipynb))
    - [Chapters 10-12](https://matheusfacure.github.io/python-causality-handbook/10-Matching.html) of @facure2022
    - [Chapter 14](https://theeffectbook.net/ch-Matching.html) of @hk2021
    - Chapters 5 and 10 of @causalml2024

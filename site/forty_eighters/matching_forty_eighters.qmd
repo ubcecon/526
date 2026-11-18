@@ -18,7 +18,7 @@ format:
           chalk-width: 2
           chalk-effect: 0.0
         title-slide-attributes:
-          data-background-image: "../tak.jpg"
+          data-background-image: "title_soldier.jpg"
           data-background-size: contain
 execute:
   cache: true
@@ -27,6 +27,14 @@ bibliography: ../526.bib
 ---
 
 # Introduction
+
+## AI Disclosure
+
+::: {.callout-note}
+## Declaration of AI Use
+
+These slides (including the Python translation of the replication pipeline, empirical comparisons, and speaker notes) were **AI-generated with human supervision**.
+:::
 
 ## Research Question & Setting
 
@@ -427,6 +435,41 @@ Because only $p = 73 / 11096 \approx 0.0066$ of towns are treated, any control t
 Whenever treatment is very rare and overlap is weak near $\hat{m}_0(X) \approx 1$, inverse-propensity-weighted estimators (IPW and `DoubleMLIRM`) are highly unstable.
 :::
 
+## Improving `DoubleMLIRM` with `PSProcessorConfig`
+
+```{python}
+from doubleml.utils import PSProcessorConfig
+
+# Calibrate (cross-validated isotonic regression) and clip propensity scores
+ps_cfg = PSProcessorConfig(
+    clipping_threshold=0.05,
+    calibration_method="isotonic",
+    cv_calibration=True,
+)
+
+dml_irm_cal = dml.DoubleMLIRM(
+    dmldata,
+    ml_g=GradientBoostingRegressor(n_estimators=100, max_depth=3, learning_rate=0.05, random_state=526),
+    ml_m=GradientBoostingClassifier(n_estimators=100, max_depth=3, learning_rate=0.05, random_state=526),
+    score="ATTE",
+    n_folds=5,
+    normalize_ipw=True,
+    ps_processor_config=ps_cfg,
+)
+dml_irm_cal.fit()
+print("DoubleMLIRM (Gradient Boosting + Isotonic Calibration & Clipping, ATTE):")
+print(dml_irm_cal.summary)
+```
+
+::: {.notes}
+Can we fix `DoubleMLIRM` without abandoning the interactive (heterogeneous-effect) model? Yes! `doubleml.utils.PSProcessorConfig` provides propensity-score post-processing—specifically **calibration** and **clipping**—before computing the inverse-probability weights:
+
+1. **Why calibration helps (`calibration_method="isotonic"`, `cv_calibration=True`):** Flexible tree-based classifiers like `GradientBoostingClassifier` often produce poorly calibrated probabilities on imbalanced datasets ($0.66\%$ treated), pushing predicted probabilities artificially close to $0$ or $1$. Isotonic calibration fits a monotone mapping from raw classifier scores to empirical treatment frequencies using cross-validation (`cv_calibration=True` avoids overfitting the calibration step).
+2. **Why clipping helps (`clipping_threshold=0.05`):** Clipping bounds $\hat{m}_0(X) \in [0.05, 0.95]$, preventing any single control town from receiving an astronomical weight $\frac{\hat{m}_0(X)}{1 - \hat{m}_0(X)}$.
+
+With `PSProcessorConfig`, the `GradientBoosting` `DoubleMLIRM` ATTE estimate stabilizes from `-4.85` (`SE = 7.49`) to **`0.657` (`SE = 0.308`, $p = 0.033$)**—remarkably close to the paper's matched-sample estimate (`0.662`)!
+:::
+
 ## Stable Alternative: `DoubleMLPLR` (Partially Linear Regression)
 
 ```{python}
@@ -485,6 +528,7 @@ results = pd.DataFrame({
         "5-NN Propensity Matching (exact state x pop, ATT)",
         "OLS on Matched Sample (PSM1, N=325)",
         "DoubleMLIRM (Lasso+Logit, trim=0.05, ATTE)",
+        "DoubleMLIRM (GradBoost + PSProcessorConfig, ATTE)",
         "DoubleMLPLR (Lasso)",
         "DoubleMLPLR (Gradient Boosting)",
     ],
@@ -495,6 +539,7 @@ results = pd.DataFrame({
         att_5nn_exact,
         ols_psm.params[D_col],
         dml_irm.coef[0],
+        dml_irm_cal.coef[0],
         dml_plr_lasso.coef[0],
         dml_plr_gb.coef[0],
     ],
@@ -505,6 +550,7 @@ results = pd.DataFrame({
         np.nan,
         ols_psm.bse[D_col],
         dml_irm.se[0],
+        dml_irm_cal.se[0],
         dml_plr_lasso.se[0],
         dml_plr_gb.se[0],
     ],
